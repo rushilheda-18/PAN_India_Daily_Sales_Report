@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>City Report</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16233b;
+    --ink-soft: #4a5872;
+    --paper: #f7f8fa;
+    --card: #ffffff;
+    --line: #e3e7ee;
+    --amber: #f5a623;
+    --amber-deep: #d98b0f;
+    --navy: #1d3a6e;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+  .back {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 32px; text-decoration: none;
+    font-size: 13px; font-weight: 600; color: var(--ink-soft);
+    transition: color .15s;
+  }
+  .back:hover { color: var(--amber-deep); }
+
+  header { padding: 20px 0 30px; border-bottom: 3px solid var(--ink); }
+  .eyebrow {
+    font-family: 'Archivo', sans-serif;
+    font-size: 12px; font-weight: 700;
+    letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--amber-deep); margin-bottom: 10px;
+  }
+  h1 {
+    font-family: 'Archivo', sans-serif;
+    font-size: clamp(28px, 5vw, 42px);
+    font-weight: 800; line-height: 1.1; letter-spacing: -0.01em;
+  }
+  .sub { margin-top: 10px; color: var(--ink-soft); font-size: 15px; }
+
+  .toolbar {
+    display: flex; gap: 12px; align-items: center;
+    padding: 22px 0 18px; flex-wrap: wrap;
+  }
+  .search {
+    flex: 1; min-width: 220px; padding: 11px 16px;
+    font: inherit; font-size: 14px;
+    border: 1.5px solid var(--line); border-radius: 8px;
+    background: var(--card); color: var(--ink); outline: none;
+    transition: border-color .15s;
+  }
+  .search:focus { border-color: var(--navy); }
+  .count { font-size: 13px; color: var(--ink-soft); white-space: nowrap; }
+
+  .latest {
+    display: block; text-decoration: none;
+    background: var(--ink); color: #fff;
+    border-radius: 12px; padding: 24px 28px; margin-bottom: 26px;
+    position: relative; overflow: hidden; transition: transform .15s;
+  }
+  .latest:hover { transform: translateY(-2px); }
+  .latest::after {
+    content: ""; position: absolute; right: -30px; top: -30px;
+    width: 130px; height: 130px; border-radius: 50%;
+    background: radial-gradient(circle, var(--amber) 0%, transparent 70%);
+    opacity: .55;
+  }
+  .latest .tag {
+    display: inline-block; font-family: 'Archivo', sans-serif;
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--amber); margin-bottom: 8px;
+  }
+  .latest .name {
+    font-family: 'Archivo', sans-serif; font-size: 22px; font-weight: 700;
+    margin-bottom: 4px; position: relative; z-index: 1;
+  }
+  .latest .meta { font-size: 13px; color: #b9c2d4; position: relative; z-index: 1; }
+
+  .month-label {
+    font-family: 'Archivo', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-soft); margin: 24px 0 10px;
+    padding-bottom: 6px; border-bottom: 1px solid var(--line);
+  }
+  .report {
+    display: flex; align-items: center; gap: 18px;
+    text-decoration: none; color: inherit;
+    background: var(--card); border: 1.5px solid var(--line);
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 8px;
+    transition: border-color .15s, transform .1s;
+  }
+  .report:hover { border-color: var(--amber); transform: translateX(3px); }
+  .report .date {
+    font-family: 'Archivo', sans-serif; font-weight: 700; font-size: 15px;
+    min-width: 64px; color: var(--navy); text-align: center; line-height: 1.2;
+  }
+  .report .date small {
+    display: block; font-size: 10px; font-weight: 600;
+    letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .report .title { font-size: 14.5px; font-weight: 500; flex: 1; word-break: break-word; }
+  .report .arrow { color: var(--amber-deep); font-weight: 700; }
+
+  .state {
+    text-align: center; padding: 56px 20px;
+    color: var(--ink-soft); font-size: 15px; line-height: 1.6;
+  }
+  .state code {
+    background: #eceff4; padding: 2px 7px; border-radius: 5px;
+    font-size: 13px; color: var(--navy);
+  }
+  .state.error { color: #b3402f; }
+
+  .other-cities {
+    margin-top: 44px; padding-top: 20px; border-top: 1px solid var(--line);
+  }
+  .other-cities h2 {
+    font-family: 'Archivo', sans-serif; font-size: 12px; font-weight: 700;
+    letter-spacing: .12em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 12px;
+  }
+  .chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .chip {
+    text-decoration: none; color: var(--ink-soft);
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: 20px; padding: 6px 13px; font-size: 13px;
+    transition: border-color .15s, color .15s;
+  }
+  .chip:hover { border-color: var(--amber); color: var(--ink); }
+  .chip.current { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  @media (max-width: 520px) {
+    .report { gap: 12px; padding: 12px 14px; }
+    .report .date { min-width: 52px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <a class="back" href="index.html">&larr; All reports</a>
+
+  <header>
+    <div class="eyebrow">SolarSquare &middot; City Report</div>
+    <h1 id="cityName">City</h1>
+    <div class="sub">Daily sales reports, newest first.</div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="search" type="text" placeholder="Search reports&hellip;" aria-label="Search reports">
+    <div class="count" id="count"></div>
+  </div>
+
+  <div id="content"><div class="state">Loading reports&hellip;</div></div>
+
+  <div class="other-cities">
+    <h2>Switch city</h2>
+    <div class="chips" id="chips"></div>
+  </div>
+</div>
+
+<script>
+const OWNER = "rushilheda-18";
+const REPO = "PAN_India_Daily_Sales_Report";
+
+const CITIES = [
+  "Agra","Amravati","Aurangabad","Bangalore","Bhopal","Chennai","Coimbatore",
+  "Delhi NCR","Gwalior","Hyderabad","Indore","Jabalpur","Jaipur","Jalgaon",
+  "Kanpur","Kolhapur","Lucknow","Nagpur","Nashik","Pune","Solapur","Varanasi"
+];
+
+const slugify = c => c.toLowerCase().replace(/\s+/g, "-");
+
+const params = new URLSearchParams(location.search);
+const citySlug = (params.get("city") || "").toLowerCase();
+const cityName = CITIES.find(c => slugify(c) === citySlug);
+
+document.getElementById("cityName").textContent = cityName || "Unknown city";
+document.title = (cityName || "City") + " — Daily Sales Reports";
+
+document.getElementById("chips").innerHTML = CITIES.map(c =>
+  `<a class="chip${slugify(c) === citySlug ? " current" : ""}" href="city.html?city=${slugify(c)}">${c}</a>`
+).join("");
+
+const content = document.getElementById("content");
+const countEl = document.getElementById("count");
+const searchEl = document.getElementById("search");
+let allReports = [];
+
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+
+function parseDate(name) {
+  let m = name.match(/(\d{4})[-_.](\d{1,2})[-_.](\d{1,2})/);
+  if (m) return new Date(+m[1], +m[2]-1, +m[3]);
+  m = name.match(/(\d{1,2})[-_.](\d{1,2})[-_.](\d{4})/);
+  if (m) return new Date(+m[3], +m[2]-1, +m[1]);
+  return null;
+}
+
+function prettyName(name) {
+  return name.replace(/\.html?$/i, "").replace(/[-_]+/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function render(list) {
+  countEl.textContent = list.length + (list.length === 1 ? " report" : " reports");
+  if (!list.length) {
+    content.innerHTML = '<div class="state">No reports match your search.</div>';
+    return;
+  }
+
+  let html = "";
+  const isFiltering = searchEl.value.trim().length > 0;
+  let rest = list;
+
+  if (!isFiltering) {
+    const latest = list[0];
+    const d = latest.date;
+    const dateStr = d ? `${d.getDate()} ${MONTHS[d.getMonth()]} ${d.getFullYear()}` : "Most recent upload";
+    html += `<a class="latest" href="${latest.path}">
+      <span class="tag">Latest report</span>
+      <div class="name">${prettyName(latest.name)}</div>
+      <div class="meta">${dateStr}</div>
+    </a>`;
+    rest = list.slice(1);
+  }
+
+  const groups = new Map();
+  for (const r of rest) {
+    const key = r.date ? `${MONTHS[r.date.getMonth()]} ${r.date.getFullYear()}` : "Other reports";
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(r);
+  }
+
+  for (const [label, items] of groups) {
+    html += `<div class="month-label">${label}</div>`;
+    for (const r of items) {
+      const dateBox = r.date
+        ? `<div class="date">${r.date.getDate()}<small>${MONTHS[r.date.getMonth()]}</small></div>`
+        : `<div class="date">&mdash;</div>`;
+      html += `<a class="report" href="${r.path}">
+        ${dateBox}
+        <div class="title">${prettyName(r.name)}</div>
+        <div class="arrow">&rarr;</div>
+      </a>`;
+    }
+  }
+  content.innerHTML = html;
+}
+
+async function load() {
+  if (!cityName) {
+    content.innerHTML = '<div class="state">Pick a city from the list below to see its reports.</div>';
+    return;
+  }
+  const folder = `reports/${citySlug}`;
+  try {
+    const res = await fetch(`https://api.github.com/repos/${OWNER}/${REPO}/contents/${folder}`);
+    if (res.status === 404) {
+      content.innerHTML = `<div class="state">No reports for ${cityName} yet.<br>Upload HTML files to <code>${folder}/</code> in the repository and they will appear here.</div>`;
+      countEl.textContent = "";
+      return;
+    }
+    if (!res.ok) throw new Error("GitHub API returned " + res.status);
+    const files = await res.json();
+
+    allReports = files
+      .filter(f => f.type === "file" && /\.html?$/i.test(f.name))
+      .map(f => ({ name: f.name, path: `${folder}/${f.name}`, date: parseDate(f.name) }))
+      .sort((a, b) => {
+        if (a.date && b.date) return b.date - a.date;
+        if (a.date) return -1;
+        if (b.date) return 1;
+        return b.name.localeCompare(a.name);
+      });
+
+    if (!allReports.length) {
+      content.innerHTML = `<div class="state">No reports for ${cityName} yet.</div>`;
+      countEl.textContent = "";
+      return;
+    }
+    render(allReports);
+  } catch (err) {
+    content.innerHTML = '<div class="state error">Could not load the report list. Refresh the page to try again.</div>';
+  }
+}
+
+searchEl.addEventListener("input", () => {
+  const q = searchEl.value.trim().toLowerCase();
+  render(q ? allReports.filter(r => r.name.toLowerCase().includes(q)) : allReports);
+});
+
+load();
+</script>
+</body>
+</html>
