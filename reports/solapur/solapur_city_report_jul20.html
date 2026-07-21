@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<meta charset="UTF-8"><title>Solapur · City Report · Jul 20, 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF7; --surface:#FFFFFF; --ink:#14110F; --ink-2:#3D3833;
+    --muted:#7A746E; --line:#E8E4DE; --line-2:#D9D3CB;
+    --accent:#F6A623; --green:#1E8A4C; --green-soft:#DEF1E3;
+    --amber:#B97400; --amber-soft:#FCEBC8; --red:#B43A2A; --red-soft:#FADCD3;
+    --blue:#2F5BB7;
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',-apple-system,system-ui,sans-serif; font-size:12px; line-height:1.4; }
+  .wrap { max-width:1200px; margin:16px auto; padding:22px 28px; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08); border-radius:6px; }
+  header { display:flex; align-items:baseline; justify-content:space-between;
+    padding-bottom:11px; border-bottom:2px solid var(--ink); margin-bottom:16px; }
+  header h1 { font-size:19px; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  header .meta { font-size:11px; color:var(--muted); font-weight:500; }
+  .num { font-variant-numeric:tabular-nums; }
+  .section-title { font-size:10.5px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.1em; margin:18px 0 9px;
+    padding-bottom:5px; border-bottom:1px solid var(--line); }
+  .section-title:first-child { margin-top:0; }
+  .sub-title { font-size:10px; font-weight:700; color:var(--ink-2);
+    text-transform:uppercase; letter-spacing:0.08em; margin:12px 0 6px; }
+
+  .callouts { padding:14px 18px 14px 20px; border-radius:0 4px 4px 0;
+    background:#FFFDF6; border-left:4px solid var(--accent); margin-bottom:16px; }
+  .callouts .callout-title { font-size:10px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px;
+    padding-bottom:6px; border-bottom:1px solid rgba(246,166,35,0.25); }
+  .buckets-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; }
+  .bucket { min-width:0; }
+  .bucket-lbl { font-size:10.5px; font-weight:700; color:var(--ink);
+    margin-bottom:4px; padding-bottom:3px; border-bottom:1px dotted var(--line-2); }
+  .bucket.empty .bucket-lbl { color:var(--muted); font-weight:600; }
+  .bucket-empty { font-size:10.5px; color:var(--green); font-style:italic;
+    padding-left:2px; margin-top:2px; }
+  .bucket.empty .bucket-empty { color:var(--muted); }
+  .callouts ul { margin:0; padding-left:16px; font-size:11px; }
+  .callouts li { margin-bottom:3px; line-height:1.45; }
+  .callouts li.good { color:var(--green); }
+  .callouts li.bad  { color:var(--red); }
+  .callouts li b { font-weight:600; color:var(--ink); }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .kpi { padding:8px 10px; border-radius:4px; background:#FAFAF7;
+    border-left:3px solid var(--line-2); }
+  .kpi.good  { border-left-color:var(--green); background:var(--green-soft); }
+  .kpi.bad   { border-left-color:var(--red);   background:var(--red-soft); }
+  .kpi.amber { border-left-color:var(--amber); background:var(--amber-soft); }
+  .kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--muted); font-weight:600; }
+  .kpi .big { font-size:16px; font-weight:700; letter-spacing:-0.01em; }
+  .kpi .meta { font-size:10px; color:var(--ink-2); margin-top:2px; }
+  .kpi .pctd { font-size:11px; font-weight:600; }
+  .kpi.good .pctd  { color:var(--green); }
+  .kpi.bad .pctd   { color:var(--red); }
+  .kpi.amber .pctd { color:var(--amber); }
+
+  .funnel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .funnel-card { padding:9px 10px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .funnel-card .stage { font-size:10px; font-weight:600; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+  .funnel-card .big  { font-size:18px; font-weight:700; letter-spacing:-0.01em; line-height:1.1; }
+  .funnel-card .meta { font-size:10px; color:var(--muted); }
+  .funnel-card .kpi-row { display:flex; justify-content:space-between; align-items:baseline;
+    font-size:10px; padding-top:5px; margin-top:5px; border-top:1px dashed var(--line); }
+  .funnel-card .kpi-row .lbl { color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; font-size:9px; }
+  .funnel-card .kpi-row .val { font-weight:600; font-variant-numeric:tabular-nums; }
+  .funnel-card.good .big  { color:var(--green); }
+  .funnel-card.bad  .big  { color:var(--red); }
+  .funnel-card.amber .big { color:var(--amber); }
+
+  .chan-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .chan-tile { padding:6px 9px; border-radius:3px; font-size:11px; background:#FAFAF7;
+    border:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .chan-tile .ch { font-weight:600; margin-right:6px; }
+  .chan-tile.short { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .chan-tile.over  { background:var(--green-soft); border-color:rgba(30,138,76,0.2); }
+
+  /* TAT + AOV + ageing side-by-side */
+  .side-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .side-card { padding:12px 14px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .side-card h4 { margin:0 0 6px; font-size:11px; font-weight:700; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.06em; }
+  .big-metric { font-size:22px; font-weight:700; letter-spacing:-0.01em; line-height:1; }
+  .big-metric.good { color:var(--green); }
+  .big-metric.bad  { color:var(--red); }
+  .big-metric.amber { color:var(--amber); }
+  .metric-note { font-size:10.5px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
+  .trend-chip { display:inline-block; padding:1px 7px; border-radius:3px; font-size:10px;
+    font-weight:600; margin-left:6px; }
+  .trend-chip.up  { background:var(--red-soft);   color:var(--red);   border:1px solid rgba(180,58,42,0.2); }
+  .trend-chip.dn  { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .trend-chip.flat{ background:#F1ECE5;           color:var(--muted); border:1px solid var(--line); }
+
+  .ageing-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:6px; }
+  .ageing-tile { padding:8px 6px; border-radius:3px; background:#FAFAF7;
+    border:1px solid var(--line); text-align:center; }
+  .ageing-tile.high { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .ageing-tile.mid  { background:var(--amber-soft); border-color:rgba(185,116,0,0.15); }
+  .ageing-tile .b-label { font-size:10px; color:var(--muted); font-weight:600;
+    text-transform:uppercase; letter-spacing:0.04em; }
+  .ageing-tile .b-count { font-size:16px; font-weight:700; margin-top:2px; }
+  .ageing-tile .b-pct   { font-size:10px; color:var(--ink-2); }
+
+  table.sc { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }
+  table.sc thead th { background:#F5F1EA; color:var(--ink-2); font-weight:600;
+    padding:6px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-size:10px; white-space:nowrap; letter-spacing:0.02em; }
+  table.sc thead th:first-child, table.sc thead th.left { text-align:left; }
+  table.sc tbody td { padding:5px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums; }
+  table.sc tbody td.left { text-align:left; font-weight:500; }
+  table.sc tbody tr.good td { background:rgba(30,138,76,0.06); }
+  table.sc tbody tr.bad  td { background:rgba(180,58,42,0.06); }
+  table.sc tbody tr.sc-row { cursor:pointer; }
+  table.sc tbody tr.sc-row:hover td { background:rgba(0,0,0,0.03); }
+  table.sc tbody tr.sc-row.good:hover td { background:rgba(30,138,76,0.11); }
+  table.sc tbody tr.sc-row.bad:hover  td { background:rgba(180,58,42,0.11); }
+  table.sc tbody tr.group-hdr td { background:#EEEAE0; font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); padding:5px 8px;
+    border-bottom:1px solid var(--line-2); border-top:2px solid var(--line-2); }
+  table.sc tbody tr.group-hdr.good td { background:var(--green-soft); color:var(--green); }
+  table.sc tbody tr.group-hdr.bad  td { background:var(--red-soft); color:var(--red); }
+  table.sc tbody tr.group-hdr.mid  td { background:#F1ECE5; }
+  table.sc tbody tr.total-row td { background:#EEEAE0 !important; font-weight:700;
+    border-top:2px solid var(--line-2); font-size:11px; }
+  tr.sc-drill { display:none; }
+  tr.sc-drill.open { display:table-row; }
+  tr.sc-drill td { background:#FBF8F2 !important; padding:8px 12px 10px !important; }
+  .drill-inner { display:grid; gap:8px; }
+  .drill-inner.drill-4 { grid-template-columns:repeat(4,1fr); }
+  .drill-inner.drill-5 { grid-template-columns:repeat(5,1fr); }
+  .drill-label { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:5px; }
+  .pending-detail-tbl { width:auto; max-width:100%; border-collapse:collapse; background:#fff; margin:0; }
+  .pending-detail-tbl th { background:#F5F1EA; color:var(--ink); font-weight:600; font-size:10px;
+    text-align:left; padding:5px 10px; border-bottom:1px solid var(--line); }
+  .pending-detail-tbl td.detail-cell { padding:5px 10px; font-size:10.5px; border-bottom:1px solid #F0EAE0;
+    color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .pending-detail-tbl tr:last-child td { border-bottom:none; }
+  .drill-tile { background:#fff; border:1px solid var(--line); border-radius:3px; padding:6px 8px; font-size:10px; }
+  .drill-tile .dc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+  .drill-tile .dv { font-size:11px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .drill-tile .dv b { color:var(--ink); }
+  .expand-hint { color:var(--muted); font-size:9px; margin-left:4px; }
+
+  .pill { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600; }
+  .pill.good { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .pill.bad  { background:var(--red-soft); color:var(--red); border:1px solid rgba(180,58,42,0.2); }
+  .pill.mid  { background:#F1ECE5; color:var(--muted); border:1px solid var(--line); }
+  .trend { font-size:10px; font-weight:600; margin-left:3px; }
+  .trend.up  { color:var(--green); }
+  .trend.dn  { color:var(--red); }
+  .trend.flat { color:var(--muted); }
+
+  .off-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+  .off-tile { padding:8px 10px; border-radius:3px; background:#FAFAF7; border:1px solid var(--line); }
+  .off-tile.alarm { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .off-tile .oc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; }
+  .off-tile .op { font-size:15px; font-weight:700; margin:2px 0; letter-spacing:-0.01em; }
+  .off-tile .om { font-size:10px; color:var(--muted); }
+  .off-tile.alarm .op { color:var(--red); }
+
+  .footnote { margin-top:14px; padding:10px 12px; background:#FAFAF7;
+    border-left:3px solid var(--muted); font-size:10.5px; color:var(--ink-2); line-height:1.5; }
+</style></head><body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Solapur · City Sales Report</h1>
+    <div class="meta" style="font-size:11px; color:#3D3833; margin-top:2px;">
+      Jul MTD (Jul 1 – Jul 20, 2026) · LMTD: Jun 1 – Jun 20
+    </div>
+  </div>
+  <div class="meta" style="text-align:right;">
+    <div><b style="color:var(--ink); font-size:14px;">10 orders MTD</b> · target 16</div>
+    <div>Field Sales only</span></div></div>
+  </div>
+</header>
+
+<div class="callouts">
+  <div class="callout-title">Key alerts · MTD (Jul 1 – Jul 20, 2026) · Solapur Field Sales</div>
+  <div class="buckets-grid"><div class="bucket empty"><div class="bucket-lbl">1 · Lead sufficiency (BQL)</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket"><div class="bucket-lbl">2 · Funnel alerts (BQL → MS → MD → Order → HOTO)</div><ul><li class="bad">⚠ <b>BQL → MS</b> 23.8% vs target 31.9% (-8.1pp)</li><li class="bad">⚠ <b>MS → MD</b> 61.1% vs target 81.0% (-20.0pp)</li></ul></div><div class="bucket empty"><div class="bucket-lbl">3 · HOTO TAT + Pending order ageing</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket"><div class="bucket-lbl">4 · AOV insights</div><ul><li class="bad">⚠ <b>GoodZero Uno share rising</b> 0.0% → 10.0% (+10.0pp vs LMTD) (intra-MTD -20.0pp)</li></ul></div><div class="bucket"><div class="bucket-lbl">5 · SC-level performance (overall MD → Order)</div><ul><li class="bad">⚠ <b>rajkumar.sai</b> — 18 MDs MTD, only 5.6% conv, recent 5d 0.0% (↓ worsening)</li><li class="good">✓ <b>noorahemad.khalifa</b> — 19 MDs, 15.8% conv (strong), recent 5d 33.3% ↑</li></ul></div><div class="bucket empty"><div class="bucket-lbl">6 · Offering alert · SC level (SSE Blue > 10% or GZ Uno > 20%)</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket"><div class="bucket-lbl">7 · kW conversion alert · SC level (≤ 3.24 kW < 20% or > 3.24 kW < 30%)</div><ul><li class="bad">⚠ <b>noorahemad.khalifa</b> · overall 15.8% (3/19) · <b>&le;3.24kW 16.7%</b> (3/18) · &gt;3.24kW – (0/1)</li><li class="bad">⚠ <b>rajkumar.sai</b> · overall 5.6% (1/18) · <b>&le;3.24kW 7.1%</b> (1/14) · &gt;3.24kW – (0/4)</li><li class="bad">⚠ <b>alsami.shaikh</b> · overall 16.7% (2/12) · <b>&le;3.24kW 10.0%</b> (1/10) · &gt;3.24kW – (1/2)</li><li class="bad">⚠ <b>sanket.deshmukh</b> · overall 16.7% (1/6) · <b>&le;3.24kW 0.0%</b> (0/6) · &gt;3.24kW – (1/0)</li></ul></div><div class="bucket"><div class="bucket-lbl">8 · Lead score > 7 conversion · SC level (MD → Order)</div><ul><li class="bad">⚠ <b>noorahemad.khalifa</b> · 1/7 = 14.3% conv on lead-score &gt;7 MDs</li></ul></div></div>
+</div>
+
+<div class="section-title">1 · BQL by channel · shortfall check</div>
+<div class="kpi-grid"><div class="kpi good">
+      <div class="label">Digital</div>
+      <div class="big num">467 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 460</span></div>
+      <div class="meta"><span class="pctd">101.5%</span> · Δ +7 · SD 23</div>
+    </div>
+<div class="kpi amber">
+      <div class="label">Referral</div>
+      <div class="big num">5 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 20</span></div>
+      <div class="meta"><span class="pctd">25.0%</span> · Δ -15 · SD 0</div>
+    </div>
+<div class="kpi good">
+      <div class="label">BTL</div>
+      <div class="big num">0 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 0</span></div>
+      <div class="meta"><span class="pctd">–</span> · Δ +0 · SD 0</div>
+    </div>
+<div class="kpi good">
+      <div class="label">SolarPro</div>
+      <div class="big num">0 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 0</span></div>
+      <div class="meta"><span class="pctd">–</span> · Δ +0 · SD 0</div>
+    </div></div>
+
+<div class="section-title">2 · Funnel conversion (Field Sales) · MTD + same-day vs target</div>
+<div class="funnel-grid"><div class="funnel-card bad">
+      <div class="stage">BQL → MS</div>
+      <div class="big num">23.8%</div>
+      <div class="meta">113 of 475 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">31.9% (-8.1pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 20</span><span class="val">0.0% · 0/23 (+0.0pp)</span></div>
+    </div>
+<div class="funnel-card bad">
+      <div class="stage">MS → MD</div>
+      <div class="big num">61.1%</div>
+      <div class="meta">69 of 113 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">81.0% (-20.0pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 20</span><span class="val">– · 0/0 (–)</span></div>
+    </div>
+<div class="funnel-card good">
+      <div class="stage">MD → Order</div>
+      <div class="big num">14.5%</div>
+      <div class="meta">10 of 69 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">12.9% (+1.6pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 20</span><span class="val">– · 0/0 (–)</span></div>
+    </div>
+<div class="funnel-card good">
+      <div class="stage">Order → HOTO</div>
+      <div class="big num">110.0%</div>
+      <div class="meta">11 of 10 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">80.0% (+30.0pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 20</span><span class="val">– · 0/0 (–)</span></div>
+    </div></div>
+
+<div class="section-title">2a · Funnel conversion trends · daily · MTD vs LMTD vs Target</div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  Daily conversion at each stage — <b>MTD</b> (solid blue) vs <b>LMTD</b> same June span (light blue) vs <b>Target</b> (amber dashed, from the July plan's daily stage ratios). Y-axis fixed 0–100%: days that genuinely exceed 100% are pinned at the top as ▲ triangles with the true value on hover. Gaps = zero volume in the denominator that day.
+</div>
+<div style="display:flex; gap:12px; margin:0 0 8px; align-items:flex-end; flex-wrap:wrap;">
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Channel<br>
+    <select id="ct2a-ch" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All channels</option>
+      <option>Digital</option><option>Referral</option><option>SolarPro</option><option>BTL</option><option>Others</option>
+    </select></label>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Lead score<br>
+    <select id="ct2a-ls" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All lead scores</option>
+      <option>0-2</option><option>2-5</option><option>5-7</option><option>7-9</option><option>9-10</option>
+    </select></label>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">kW (MD→Ord &amp; Ord→HOTO)<br>
+    <select id="ct2a-kw" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All kW buckets</option>
+      <option>≤3.24 kW</option><option>3.24–5.4 kW</option><option>&gt;5.4 kW</option><option>Unknown</option>
+    </select></label>
+  <div style="display:flex; gap:6px; margin-left:auto;">
+    <button id="ct2a-conv-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-conv-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div style="font-size:10px; color:var(--muted); margin:-4px 0 8px;">Channel &amp; lead-score filters apply to all five charts; kW applies to MD→Order and Order→HOTO only. Target curve shows only when all three filters are at "All" (the plan has no lead-score/kW splits).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-bqlms"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-msmd"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-mdord"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-ordhoto"></canvas></div></div>
+</div>
+<div style="display:flex; align-items:center; gap:12px; margin:16px 0 8px;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink);">Order trend · MTD vs LMTD vs Target</div>
+  <div style="margin-left:auto; display:flex; gap:6px;">
+    <button id="ct2a-ord-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-ord-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:240px;"><canvas id="ct2a-order"></canvas></div></div>
+
+<div class="section-title">2b · On-spot conversion (Field Sales) · order booked same day as the meeting</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>MTD (Jul 1 – Jul 20)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;">20.0%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">2 on-spot / 10 total FS orders</div>
+    <div style="font-size:11px; margin-top:4px; font-weight:700; color:var(--red);">-7.3pp vs LMTD</div>
+  </div>
+  <div class="side-card">
+    <h4>LMTD (Jun 1 – Jun 20)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink-2); font-variant-numeric:tabular-nums;">27.3%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">3 on-spot / 11 total FS orders</div>
+  </div>
+</div>
+<div style="font-size:10.5px; color:var(--muted); margin:4px 0 0; line-height:1.5;">On-spot = the lead's meeting-done date equals its order date. Denominator = all FS orders in the period.</div>
+
+<div class="section-title">3 · Channel BQL → MD &amp; MD → Order conversion · MTD (all channels)</div>
+<div class="chan-strip"><div class="chan-tile short">
+      <span class="ch">Digital</span> BQL→MD: 62/467 = <b>13.3%</b> · tgt 25.8% (-12.6pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 6/62 = <b>9.7%</b>
+    </div>
+<div class="chan-tile over">
+      <span class="ch">Referral</span> BQL→MD: 7/5 = <b>140.0%</b> · tgt 25.8% (+114.2pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 3/7 = <b>42.9%</b>
+    </div>
+<div class="chan-tile ">
+      <span class="ch">BTL</span> BQL→MD: 0/0 = <b>–</b> · tgt 25.8% (–)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 0/0 = <b>–</b>
+    </div>
+<div class="chan-tile ">
+      <span class="ch">SolarPro</span> BQL→MD: 0/0 = <b>–</b> · tgt 25.8% (–)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 0/0 = <b>–</b>
+    </div></div>
+
+<div class="section-title">4 · Order → HOTO TAT · 5 · Pending order ageing</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Order → HOTO TAT (Field Sales · MTD)</h4>
+    
+    <div class="big-metric good">2.2 <span style="font-size:14px; color:var(--muted); font-weight:600;">days</span>
+      <span class="trend-chip dn">↓ decreasing</span>
+    </div>
+    <div class="metric-note">Based on <b>10 FS orders</b> placed in MTD (Jul 1-9) that also completed HOTO in the same window. First half 2.6d → second half 1.8d (-0.8d).</div>
+    <div style="font-size:9px; color:var(--muted); font-weight:600; margin-top:8px; text-transform:uppercase; letter-spacing:0.05em;">Daily avg TAT · Jul 1 → Jul 20 <span style="color:#B43A2A;">▬</span> line, <span style="color:#7A746E;">- - -</span> MTD avg</div>
+    <svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="xMidYMid meet" style="display:block; margin-top:6px;">
+      <line x1="8" x2="312" y1="31.3" y2="31.3" stroke="#7A746E" stroke-width="1" stroke-dasharray="2,2"/>
+      <polyline points="56.0,46.0 72.0,26.0 136.0,6.0 152.0,39.3 216.0,29.3 264.0,39.3 280.0,36.0" fill="none" stroke="#B43A2A" stroke-width="1.6"/>
+      <circle cx="56.0" cy="46.0" r="1.8" fill="#B43A2A"/><circle cx="72.0" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="136.0" cy="6.0" r="1.8" fill="#B43A2A"/><circle cx="152.0" cy="39.3" r="1.8" fill="#B43A2A"/><circle cx="216.0" cy="29.3" r="1.8" fill="#B43A2A"/><circle cx="264.0" cy="39.3" r="1.8" fill="#B43A2A"/><circle cx="280.0" cy="36.0" r="1.8" fill="#B43A2A"/>
+      <text x="8.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 01</text><text x="168.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 11</text><text x="312.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 20</text>
+    </svg>
+  </div>
+  <div class="side-card">
+    <h4>Pending FS orders ageing (June only · not converted to HOTO)</h4>
+    
+<div style="font-size:11px; color:var(--muted); margin-bottom:4px;">
+  Total FS orders in June: <b style="color:var(--ink);">10</b>
+  = handed over <b style="color:var(--green);">10</b>
+  + placed today, no HOTO yet <b style="color:var(--muted);">0</b>
+  + <b style="color:var(--red);">pending 1+ day: 0</b>
+  <span style="color:var(--muted);">(of which aged &gt;4d: <b style="color:var(--red);">0</b>)</span>
+</div>
+<div class="ageing-grid"><div class="ageing-tile ">
+      <div class="b-label">1-2 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">2-3 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">3-4 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile mid">
+      <div class="b-label">4-6 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">6-10 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">>10 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div></div>
+
+  </div>
+</div>
+
+<div class="section-title">6 · AOV and offering share</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Average Order Value</h4>
+    
+<div class="big-metric good">₹277k
+  <span style="font-size:14px; color:var(--muted); font-weight:600;">MTD</span>
+  <span class="trend-chip dn">↑ +6.2% vs LMTD</span>
+</div>
+<div class="metric-note">LMTD AOV was ₹261k · Δ ₹+16k
+  · based on 10 MTD orders / 11 LMTD orders.</div>
+  </div>
+  <div class="side-card">
+    <h4>Offering share (MTD vs LMTD)</h4>
+    <div class="off-strip"><div class="off-tile ">
+      <div class="oc">GoodZero</div>
+      <div class="op">80.0%</div>
+      <div class="om">LMTD 81.8% · Δ ↓ -1.8pp · intra-MTD +40.0pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">GoodZero Pro</div>
+      <div class="op">0.0%</div>
+      <div class="om">LMTD 0.0% · Δ → +0.0pp · intra-MTD +0.0pp</div>
+    </div>
+<div class="off-tile alarm">
+      <div class="oc">GoodZero Uno</div>
+      <div class="op">10.0%</div>
+      <div class="om">LMTD 0.0% · Δ ↑ +10.0pp · intra-MTD -20.0pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">SSE Blue</div>
+      <div class="op">10.0%</div>
+      <div class="om">LMTD 18.2% · Δ ↓ -8.2pp · intra-MTD -20.0pp</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section-title">7 · Overall kW-bucket & Lead-score conversion · MD → Order (Solapur FS · MTD)</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>kW-bucket conversion</h4>
+    
+<div class="big-metric bad">14.5%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall MD → Order</span>
+</div>
+<div class="metric-note">10 orders from 69 MDs (FS · June).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--bad);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">≤ 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--bad);">13.6%</div>
+    <div style="font-size:10px; color:var(--muted);">8/59 MDs · 86% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 20%</div>
+  </div>
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--bad);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">&gt; 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--bad);">20.0%</div>
+    <div style="font-size:10px; color:var(--muted);">2/10 MDs · 14% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 30%</div>
+  </div>
+</div>
+  </div>
+  <div class="side-card">
+    <h4>Lead score &gt; 7 conversion</h4>
+    
+<div class="big-metric bad">16.7%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall</span>
+</div>
+<div class="metric-note">3 orders from 18 lead-score &gt;7 MDs (FS · June).
+  Overall MD→Order = 14.5% · <b>2.2pp higher</b> than overall.</div>
+<div style="font-size:9px; color:var(--muted); font-weight:700; margin-top:10px; text-transform:uppercase; letter-spacing:0.05em;">By source · lead-score &gt;7 MDs → orders</div>
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:4px;">
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Digital</div>
+        <div style="font-size:14px; font-weight:700; color:var(--bad); margin-top:1px;">8.3%</div>
+        <div style="font-size:9px; color:var(--muted);">1/12</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Referral</div>
+        <div style="font-size:14px; font-weight:700; color:var(--good); margin-top:1px;">33.3%</div>
+        <div style="font-size:9px; color:var(--muted);">2/6</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">BTL</div>
+        <div style="font-size:14px; font-weight:700; color:var(--muted); margin-top:1px;">–</div>
+        <div style="font-size:9px; color:var(--muted);">0/0</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">SolarPro</div>
+        <div style="font-size:14px; font-weight:700; color:var(--muted); margin-top:1px;">–</div>
+        <div style="font-size:9px; color:var(--muted);">0/0</div>
+      </div></div>
+  </div>
+</div>
+
+<div class="section-title">8 · SC-level view · MD → Order productivity (Solapur · ≥ 13 MDs MTD) <span class="expand-hint">click any row for channel + lead-score breakdown</span></div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">SC (email prefix)</th>
+    <th>SC Index (Bucket)</th>
+    <th>MDs MTD</th><th>Ord MTD</th><th>Conv MTD</th><th>On-spot</th>
+    <th>MDs 5d</th><th>Ord 5d</th><th>Conv 5d</th>
+    <th>MDs SD</th><th>Ord SD</th>
+    <th>Status</th>
+  </tr></thead>
+  <tbody><tr class="group-hdr good"><td colspan="12">Good performers · top-quartile conversion (double down) · 1 SCs</td></tr><tr class="sc-row good" data-sc="noorahemad.khalifa@solarsquare.in">
+      <td class="left">noorahemad.khalifa <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><span style="color:var(--muted);">NA</span></td>
+      <td>19</td><td>3</td><td>15.8%</td><td>33.3% <span style="color:var(--muted); font-size:10px;">(1/3)</span></td>
+      <td>3</td><td>1</td><td>33.3% <span class="trend up">↑+17.5</span></td>
+      <td>0</td><td>0</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="noorahemad.khalifa@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>14</b> · Ord <b>3</b> · Conv <b>21.4%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>6</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>1</b> · Conv <b>16.7%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>4</b> · Ord <b>1</b> · Conv <b>25.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div></div></td></tr><tr class="group-hdr bad"><td colspan="12">Bad performers · bottom-quartile conversion (coaching candidates) · 1 SCs</td></tr><tr class="sc-row bad" data-sc="rajkumar.sai@solarsquare.in">
+      <td class="left">rajkumar.sai <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><span style="color:var(--muted);">NA</span></td>
+      <td>18</td><td>1</td><td>5.6%</td><td>0% <span style="color:var(--muted); font-size:10px;">(0/1)</span></td>
+      <td>5</td><td>0</td><td>0.0% <span class="trend dn">-5.6</span></td>
+      <td>0</td><td>0</td>
+      <td><span class="pill bad">BAD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="rajkumar.sai@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>17</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>1</b> · Ord <b>1</b> · Conv <b>100.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>4</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>9</b> · Ord <b>1</b> · Conv <b>11.1%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>4</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div></td></tr></tbody>
+</table>
+
+<div class="section-title">9 · Pending order ageing by SC · Solapur FS <span class="expand-hint">click any row to see order-level detail</span></div>
+<div style="padding:12px; color:var(--muted); font-style:italic;">No pending FS orders — all past orders have been handed over.</div>
+
+<div class="section-title">10 · Cancellation + on-hold by SC · June orders</div>
+<div style="padding:12px; color:var(--muted); font-style:italic;">No cancellation or on-hold orders in June.</div>
+
+
+
+
+<div class="section-title">12 · HOTO mismatch · welcome-call coverage &amp; mismatch (MTD)</div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  HOTOs done in MTD per SC. Welcome call counted when Wlc Call Date is populated. <b>First mismatch %</b> = mismatches ÷ welcome calls. <b>Final mismatch</b> = mismatches still not resolved; <b>Final %</b> = final ÷ welcome calls. Same logic as the PAN India HOTO mismatch section. Sorted by mismatch count.
+</div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">SC (email prefix)</th>
+    <th>HOTOs done</th>
+    <th>Wlc calls</th>
+    <th>Wlc %</th>
+    <th>First mismatch</th>
+    <th>First mis %</th>
+    <th>Resolved</th>
+    <th>Final mismatch</th>
+    <th>Final mis %</th>
+  </tr></thead>
+  <tbody><tr>
+          <td class="left">ziyaul.shaikh</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>33.3%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>33.3%</td>
+        </tr><tr>
+          <td class="left">noorahemad.khalifa</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>33.3%</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">alsami.shaikh</td>
+          <td>2</td>
+          <td>2</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">sanket.deshmukh</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">rajkumar.sai</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">avishkar.sargule</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr style="background:#f3f4f6; border-top:2px solid #9ca3af; font-weight:700;">
+          <td class="left">Total (Solapur)</td>
+          <td>11</td>
+          <td>11</td>
+          <td>100.0%</td>
+          <td>2</td>
+          <td>18.2%</td>
+          <td>1</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>9.1%</td>
+        </tr></tbody>
+</table>
+
+<div class="footnote">
+  <b>Reading the SC table.</b> Rows grouped by MTD conversion into GOOD (top quartile), MID, and BAD (bottom quartile — coaching candidates). Trend arrow compares recent 5-day (Jul 1-9) conversion to MTD baseline; ↑ improving, ↓ worsening. <b>On-spot</b> = share of an SC's MTD orders where the MD and Order happened the same day, formatted as % (on-spot orders / total MTD orders). Click any SC row to expand and see MD → Order performance broken out both by channel (Digital / Referral / BTL / SolarPro) and by lead-score bucket (cohort view: MDs done in the current month and orders from those MDs, bucketed 0-2, 2-5, 5-7, 7-9, 9-10). Filter: min 13 MDs MTD.
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('table.sc tbody tr.sc-row').forEach(function(row){
+  row.addEventListener('click', function(){
+    var sc = row.dataset.sc;
+    var tbody = row.closest('tbody');
+    if (!tbody) return;
+    var drill = tbody.querySelector('tr.sc-drill[data-sc="' + sc + '"]');
+    if (drill) drill.classList.toggle('open');
+  });
+});
+</script>
+
+
+<script>
+(function() {
+  if (typeof Chart === 'undefined') return;   // offline fallback: charts skipped gracefully
+  const T = {"mtd":{"bql":[20,21,30,26,6,15,23,30,32,22,25,32,12,27,23,29,36,22,21,23],"ms":[0,8,11,6,8,0,0,9,6,4,5,12,0,12,7,6,8,4,7,0],"md":[1,6,8,3,5,0,2,2,6,4,5,6,0,3,2,3,3,4,6,0],"ord":[1,0,2,1,0,0,0,0,1,0,1,1,0,0,1,1,0,1,0,0],"hoto":[0,0,0,1,2,0,0,0,1,1,0,1,0,2,0,0,1,2,0,0]},"lmtd":{"bql":[16,20,13,20,15,16,16,16,23,34,23,16,33,20,15,34,32,16,24,33],"ms":[0,3,7,6,8,4,5,1,6,7,6,7,8,8,1,12,8,12,6,11],"md":[0,1,2,4,4,4,8,0,7,2,6,4,8,8,1,5,5,8,6,9],"ord":[0,1,0,0,1,0,0,1,1,1,2,0,0,0,1,1,0,0,1,1],"hoto":[0,0,0,0,0,0,0,0,0,0,1,2,0,1,1,0,0,2,0,2]},"tgt":{"bql":[24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0,24.0],"ms":[0.0,8.0,9.0,10.0,12.0,0.0,9.0,9.0,8.0,9.0,10.0,12.0,0.0,9.0,9.0,8.0,9.0,10.0,12.0,0.0],"md":[0.0,7.0,7.0,8.0,10.0,0.0,7.0,7.0,7.0,7.0,8.0,10.0,0.0,7.0,7.0,7.0,7.0,8.0,10.0,0.0],"ord":[0.0,1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0,1.0,1.0,1.0,1.0,1.0,1.0,0.0],"hoto":[0.0,0.7,0.7,0.7,0.7,0.0,0.7,0.7,0.75,0.75,0.75,0.75,0.0,0.75,0.75,0.8,0.8,0.8,0.8,0.0]},"slice":{"bql":{"m":[[1,0,5,3,13],[1,0,1,3,6],[1,0,3,3,1],[2,0,5,3,15],[2,0,1,3,4],[2,0,2,3,1],[2,1,3,3,1],[3,0,5,3,23],[3,0,1,3,2],[3,0,2,3,3],[3,1,4,3,2],[4,0,5,3,13],[4,0,2,3,3],[4,0,1,3,10],[5,0,5,3,5],[5,0,1,3,1],[6,0,5,3,12],[6,0,2,3,1],[6,0,3,3,1],[6,0,1,3,1],[7,0,5,3,19],[7,0,2,3,4],[8,0,5,3,19],[8,0,1,3,7],[8,0,2,3,2],[8,1,4,3,2],[9,0,5,3,20],[9,0,1,3,9],[9,0,2,3,3],[10,0,5,3,15],[10,0,3,3,2],[10,0,1,3,3],[10,0,2,3,2],[11,0,5,3,20],[11,0,2,3,3],[11,0,3,3,1],[11,0,1,3,1],[12,0,5,3,23],[12,0,3,3,2],[12,0,2,3,3],[12,0,1,3,4],[13,0,5,3,7],[13,0,2,3,2],[13,0,3,3,3],[14,0,5,3,21],[14,0,3,3,3],[14,0,2,3,1],[14,4,5,3,2],[15,0,5,3,15],[15,0,1,3,2],[15,0,2,3,6],[16,0,5,3,27],[16,0,1,3,1],[16,0,2,3,1],[17,0,5,3,30],[17,0,1,3,2],[17,0,2,3,2],[17,0,4,3,1],[17,0,3,3,1],[18,0,5,3,15],[18,0,2,3,2],[18,0,3,3,1],[18,0,4,3,1],[18,0,1,3,2],[18,4,5,3,1],[19,0,5,3,18],[19,0,2,3,2],[19,0,3,3,1],[20,0,5,3,18],[20,0,3,3,2],[20,0,4,3,1],[20,0,1,3,2]],"l":[[1,0,5,3,8],[1,0,1,3,3],[1,4,5,3,5],[2,0,5,3,11],[2,0,1,3,7],[2,0,2,3,1],[2,1,3,3,1],[3,0,5,3,9],[3,0,1,3,2],[3,0,2,3,1],[3,4,5,3,1],[4,0,5,3,10],[4,0,1,3,7],[4,0,2,3,1],[4,1,0,3,1],[4,1,3,3,1],[5,0,1,3,9],[5,0,2,3,2],[5,0,5,3,1],[5,0,3,3,1],[5,1,5,3,1],[5,1,3,3,1],[6,0,5,3,7],[6,0,1,3,5],[6,0,2,3,1],[6,0,3,3,1],[6,1,3,3,2],[7,0,2,3,1],[7,0,5,3,11],[7,0,1,3,4],[8,0,5,3,10],[8,0,2,3,1],[8,0,3,3,1],[8,0,1,3,4],[9,0,5,3,15],[9,0,2,3,3],[9,0,1,3,4],[9,1,1,3,1],[10,0,5,3,25],[10,0,3,3,1],[10,0,1,3,4],[10,0,2,3,3],[10,1,1,3,1],[11,0,5,3,10],[11,0,1,3,10],[11,0,3,3,1],[11,0,2,3,1],[11,1,4,3,1],[12,0,5,3,8],[12,0,3,3,1],[12,0,1,3,4],[12,0,2,3,1],[12,1,3,3,2],[13,3,2,3,3],[13,0,1,3,5],[13,0,5,3,10],[13,0,3,3,1],[13,0,2,3,2],[13,4,5,3,10],[13,1,3,3,2],[14,0,5,3,10],[14,0,2,3,2],[14,0,3,3,1],[14,0,1,3,4],[14,4,5,3,2],[14,1,3,3,1],[15,0,5,3,8],[15,0,2,3,2],[15,0,3,3,1],[15,0,1,3,2],[15,4,5,3,1],[15,1,3,3,1],[16,0,5,3,21],[16,0,2,3,3],[16,0,3,3,1],[16,0,1,3,6],[16,4,5,3,1],[16,1,3,3,1],[16,1,1,3,1],[17,0,1,3,11],[17,0,2,3,4],[17,0,5,3,12],[17,4,5,3,1],[17,1,1,3,1],[17,1,3,3,1],[17,2,1,3,2],[18,0,5,3,9],[18,0,2,3,2],[18,0,3,3,1],[18,0,1,3,4],[19,0,5,3,19],[19,0,2,3,2],[19,0,1,3,2],[19,4,5,3,1],[20,3,2,3,1],[20,0,5,3,22],[20,0,1,3,6],[20,0,3,3,2],[20,0,2,3,2]]},"ms":{"m":[[17,0,1,3,1],[4,0,1,0,4],[3,0,3,3,1],[2,0,2,3,3],[2,0,2,0,2],[3,0,2,3,1],[2,0,1,0,1],[5,0,0,3,2],[15,0,2,3,3],[4,0,0,1,1],[2,0,3,0,1],[3,0,2,0,1],[3,0,1,3,2],[5,0,1,0,3],[3,0,0,0,1],[3,0,1,0,1],[5,0,1,3,1],[4,0,1,3,1],[5,0,1,1,1],[5,0,0,0,1],[12,0,3,0,2],[8,0,1,3,2],[8,0,2,3,3],[8,0,2,0,1],[8,0,3,0,1],[11,0,1,3,1],[8,0,1,2,1],[9,0,2,0,1],[12,0,2,3,1],[9,0,1,0,1],[9,0,2,3,1],[9,0,0,2,1],[9,0,1,3,1],[12,0,1,3,4],[9,0,1,1,1],[10,0,2,3,1],[10,0,2,1,2],[14,0,2,1,1],[12,0,1,0,2],[10,0,2,0,1],[11,0,3,0,1],[15,0,3,3,2],[12,0,2,0,1],[12,0,3,3,1],[11,0,1,0,1],[14,0,1,3,2],[11,0,3,3,1],[14,0,2,3,3],[12,0,2,1,1],[14,0,0,3,1],[14,0,1,0,1],[14,0,3,0,2],[19,0,1,3,1],[16,0,1,3,1],[14,0,2,0,1],[15,0,3,1,1],[14,4,2,3,1],[16,0,2,0,2],[18,0,3,3,2],[17,0,2,3,2],[15,0,1,0,1],[18,0,2,0,1],[16,0,2,1,1],[16,0,0,3,1],[16,0,2,3,1],[17,0,1,0,1],[17,0,0,0,1],[17,0,4,3,1],[17,0,0,3,1],[19,0,3,3,2],[17,0,3,0,1],[19,0,2,1,1],[19,0,4,0,1],[19,0,1,0,1],[19,0,0,0,1],[18,1,3,0,1],[3,1,3,3,1],[3,1,2,0,1],[2,1,3,3,1],[3,1,4,3,1],[3,1,4,0,1],[8,1,4,0,1],[11,1,4,0,1]],"l":[[5,0,1,0,2],[3,0,1,3,3],[3,0,0,1,1],[2,0,0,3,1],[5,0,1,3,1],[4,4,0,3,1],[5,0,1,1,1],[9,0,1,0,3],[7,0,1,0,3],[2,0,1,3,1],[3,0,1,2,1],[10,0,0,3,1],[3,0,2,0,1],[19,0,1,3,2],[6,0,1,1,1],[3,0,1,0,1],[4,0,2,0,1],[4,0,0,0,1],[5,0,0,3,2],[4,0,2,3,2],[11,0,1,3,1],[6,0,2,3,2],[10,0,1,3,3],[5,0,0,0,1],[9,0,1,3,2],[18,0,3,3,1],[8,0,1,3,1],[14,0,1,3,1],[11,0,0,0,1],[20,0,1,0,6],[10,0,1,2,1],[12,0,1,0,1],[12,0,3,1,1],[13,0,1,3,2],[10,0,1,1,1],[18,0,1,3,3],[19,0,0,3,1],[10,0,3,3,1],[11,0,2,0,2],[11,0,1,0,1],[11,0,1,1,1],[12,0,2,1,1],[12,0,1,3,1],[12,0,0,3,1],[16,0,1,3,3],[13,0,1,0,1],[20,0,1,2,1],[14,0,2,1,1],[13,0,3,0,1],[16,0,1,0,2],[17,0,0,3,1],[14,4,0,0,2],[13,0,0,1,1],[13,3,2,2,1],[14,0,1,0,2],[14,3,2,3,2],[16,0,2,3,1],[16,4,0,3,1],[15,0,2,0,1],[17,0,3,2,1],[16,0,2,0,1],[16,0,0,3,1],[19,0,2,3,1],[18,0,0,0,1],[17,0,1,3,2],[18,4,0,0,1],[17,0,1,2,1],[17,0,3,1,1],[19,0,2,2,1],[17,0,2,2,1],[20,0,1,1,2],[18,0,1,1,1],[18,0,2,1,1],[18,4,0,1,1],[18,0,1,0,1],[19,0,2,0,1],[20,0,1,3,1],[20,4,0,0,1],[7,1,3,0,1],[2,1,3,0,1],[4,1,3,0,1],[5,1,3,0,1],[6,1,3,3,1],[7,1,3,3,1],[9,1,1,0,1],[18,1,4,1,1],[12,1,3,0,1],[12,1,3,3,1],[13,1,3,0,1],[13,1,3,3,1],[17,1,3,0,1],[16,1,3,3,1],[16,1,3,0,1],[16,1,1,1,1],[18,1,3,0,1]]},"md":{"m":[[1,0,2,0,1],[10,0,1,0,1],[3,0,1,3,2],[11,0,3,0,2],[2,0,2,0,3],[4,0,1,0,2],[3,0,2,3,1],[2,0,1,0,1],[7,0,0,1,1],[2,0,3,0,1],[3,0,2,0,1],[5,0,1,0,4],[3,0,0,0,1],[3,0,1,0,1],[5,0,1,1,1],[7,0,0,0,1],[12,0,3,0,2],[8,0,2,0,1],[9,0,3,0,1],[9,0,1,2,1],[9,0,1,0,1],[9,0,2,3,1],[9,0,0,2,1],[9,0,1,1,1],[10,0,2,1,2],[14,0,2,1,1],[12,0,1,0,2],[10,0,2,0,1],[12,0,2,0,1],[11,0,1,0,1],[11,0,3,3,1],[12,0,2,1,1],[15,0,2,3,1],[14,0,1,3,1],[14,0,1,0,1],[15,0,3,0,1],[17,0,2,0,1],[18,0,3,1,1],[16,0,2,0,2],[19,0,1,0,2],[18,0,2,0,1],[17,0,2,3,1],[16,0,0,3,1],[18,0,1,0,1],[18,0,0,0,1],[19,0,3,3,1],[17,0,3,0,1],[19,0,4,0,1],[19,0,0,0,1],[19,1,3,0,1],[3,1,2,0,1],[2,1,3,3,1],[4,1,4,3,1],[3,1,4,0,1],[8,1,4,0,1],[11,1,4,0,1]],"l":[[6,0,1,0,1],[7,0,1,0,3],[7,0,1,3,1],[2,0,0,1,1],[6,0,0,3,1],[6,0,1,1,1],[9,0,1,0,3],[4,0,1,2,1],[11,0,0,3,1],[3,0,2,0,1],[4,0,1,1,1],[3,0,1,0,1],[4,0,0,0,1],[7,0,2,3,1],[5,0,0,3,1],[6,0,2,3,1],[5,0,1,0,1],[5,0,0,0,1],[18,0,3,3,1],[9,0,1,3,2],[14,0,1,3,1],[13,0,1,0,1],[11,0,0,0,1],[20,0,1,0,5],[10,0,1,2,1],[12,0,1,0,1],[12,0,3,1,1],[11,0,1,1,2],[19,0,0,3,1],[10,0,1,3,1],[13,0,2,0,1],[11,0,1,0,1],[11,0,2,0,1],[13,0,2,1,1],[12,0,0,3,1],[20,0,1,2,1],[14,0,2,1,1],[13,0,3,0,1],[19,0,1,0,2],[17,0,0,3,1],[16,4,0,0,1],[14,4,0,0,1],[13,0,0,1,1],[13,3,2,2,1],[14,0,1,0,2],[14,3,2,3,1],[14,4,0,3,1],[16,0,1,3,1],[15,0,2,0,1],[17,0,3,2,1],[16,0,2,0,1],[16,0,0,3,1],[16,0,1,0,1],[18,0,0,0,1],[18,4,0,0,1],[17,0,1,2,1],[17,0,3,1,1],[19,0,2,2,1],[17,0,2,2,1],[18,0,1,3,1],[20,0,1,1,2],[18,0,1,1,1],[18,0,2,1,1],[18,4,0,1,1],[19,0,2,0,1],[20,0,1,3,1],[7,1,3,0,2],[4,1,3,0,1],[5,1,3,0,1],[9,1,3,3,1],[7,1,3,3,1],[9,1,1,0,1],[13,1,3,0,2],[12,1,3,3,1],[14,1,3,3,1],[19,1,3,0,1],[18,1,3,0,1]]},"ord":{"m":[[18,4,0,0,1],[12,0,2,1,1],[4,0,2,1,1],[1,0,1,0,1],[15,0,0,0,1],[3,0,2,0,1],[16,0,3,0,1],[11,1,3,0,1],[9,1,2,0,1],[3,1,4,0,1]],"l":[[11,0,1,1,1],[5,0,3,0,1],[2,0,0,0,1],[19,0,1,1,1],[8,0,1,0,1],[11,0,0,0,1],[20,0,1,0,1],[16,0,2,0,1],[15,1,3,0,1],[10,1,3,0,1],[9,1,1,0,1]]},"hoto":{"m":[[18,4,0,0,1],[14,0,2,1,1],[4,0,2,1,1],[12,0,3,0,1],[5,0,1,0,1],[18,0,0,0,1],[9,0,2,0,1],[17,0,3,0,1],[14,1,3,0,1],[10,1,2,0,1],[5,1,4,0,1]],"l":[[18,0,3,0,1],[14,0,0,0,1],[20,0,1,1,1],[12,0,0,0,1],[20,0,1,0,1],[18,0,2,0,1],[15,1,3,0,1],[12,1,3,0,1],[11,1,1,0,1]]}}};
+  const N = T.mtd.bql.length;
+  const LABELS = Array.from({length: N}, (_, i) => 'Jul ' + (i + 1));
+  const STAGES = [
+    {id: 'bqlms',   title: 'BQL → MS conversion',    num: 'ms',   den: 'bql', useKw: false},
+    {id: 'msmd',    title: 'MS → MD conversion',     num: 'md',   den: 'ms',  useKw: false},
+    {id: 'mdord',   title: 'MD → Order conversion',  num: 'ord',  den: 'md',  useKw: true},
+    {id: 'ordhoto', title: 'Order → HOTO conversion',num: 'hoto', den: 'ord', useKw: true},
+  ];
+  let convMode = 'daily';   // 'daily' | 'cum' — cumulative = cum(num)/cum(den) through that day
+  const chSel = document.getElementById('ct2a-ch');
+  const lsSel = document.getElementById('ct2a-ls');
+  const kwSel = document.getElementById('ct2a-kw');
+  const FT_CH = ['Digital','Referral','SolarPro','BTL','Others'];
+  const FT_LS = ['0-2','2-5','5-7','7-9','9-10'];
+  const FT_KW = ['≤3.24 kW','3.24–5.4 kW','>5.4 kW','Unknown'];
+  function fIdx(sel, dims) { return sel.value === '__ALL__' ? -1 : dims.indexOf(sel.value); }
+  function allBase() { return chSel.value === '__ALL__' && lsSel.value === '__ALL__' && kwSel.value === '__ALL__'; }
+  function sliceDaily(stage, per, useKw) {
+    const chI = fIdx(chSel, FT_CH), lsI = fIdx(lsSel, FT_LS), kwI = fIdx(kwSel, FT_KW);
+    const out = new Array(N).fill(0);
+    for (const [d, ci, li, ki, n] of T.slice[stage][per]) {
+      if (chI !== -1 && ci !== chI) continue;
+      if (lsI !== -1 && li !== lsI) continue;
+      if (useKw && kwI !== -1 && ki !== kwI) continue;
+      if (d >= 1 && d <= N) out[d-1] += n;
+    }
+    return out;
+  }
+  function ratio(numArr, denArr) {
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = numArr[i], d = denArr[i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  function conv(src, numK, denK) {   // target only
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = src[numK][i], d = src[denK][i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  const convCharts = {};
+  function buildConvCharts() { STAGES.forEach(st => {
+    const el = document.getElementById('ct2a-' + st.id);
+    if (!el) return;
+    if (convCharts[st.id]) convCharts[st.id].destroy();
+    const RAWS = [
+      ratio(sliceDaily(st.num, 'm', st.useKw), sliceDaily(st.den, 'm', st.useKw)),
+      ratio(sliceDaily(st.num, 'l', st.useKw), sliceDaily(st.den, 'l', st.useKw)),
+      allBase() ? conv(T.tgt, st.num, st.den) : Array.from({length: N}, () => null),
+    ];
+    const clamp = a => a.map(v => v === null ? null : Math.min(v, 100));
+    const capped = (raw, i) => raw[i] !== null && raw[i] > 100;
+    const pr = (raw, base) => ctx => capped(raw, ctx.dataIndex) ? 5 : base;
+    const ps = raw => ctx => capped(raw, ctx.dataIndex) ? 'triangle' : 'circle';
+    convCharts[st.id] = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: clamp(RAWS[0]), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: pr(RAWS[0], 2), pointStyle: ps(RAWS[0]), pointBackgroundColor: '#1d4ed8', tension: 0.25, spanGaps: true},
+        {label: 'LMTD',   data: clamp(RAWS[1]), borderColor: '#93c5fd', borderWidth: 2, pointRadius: pr(RAWS[1], 2), pointStyle: ps(RAWS[1]), pointBackgroundColor: '#93c5fd', tension: 0.25, spanGaps: true},
+        {label: 'Target', data: clamp(RAWS[2]), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: pr(RAWS[2], 0), pointStyle: ps(RAWS[2]), pointBackgroundColor: '#f59e0b', tension: 0.1, spanGaps: true},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: st.title + (convMode === 'cum' ? ' · cumulative' : ' · daily'), align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => {
+            const rv = RAWS[ctx.datasetIndex][ctx.dataIndex];
+            const jn = ctx.dataset.label === 'LMTD' ? ' (Jun ' + (ctx.dataIndex + 1) + ')' : '';
+            if (rv === null) return ctx.dataset.label + jn + ': –';
+            return ctx.dataset.label + jn + ': ' + rv.toFixed(1) + '%' + (rv > 100 ? ' ▲ above 100% — axis capped' : '');
+          }}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {min: 0, max: 100, grid: {color: '#eee'}, ticks: {stepSize: 20, font: {size: 9}, callback: v => v + '%'}}}}
+    });
+  }); }
+  buildConvCharts();
+  const cvD = document.getElementById('ct2a-conv-daily'), cvC = document.getElementById('ct2a-conv-cum');
+  function setConvBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  cvD.addEventListener('click', () => { convMode = 'daily'; setConvBtn(cvD, cvC); buildConvCharts(); });
+  cvC.addEventListener('click', () => { convMode = 'cum';   setConvBtn(cvC, cvD); buildConvCharts(); });
+  [chSel, lsSel, kwSel].forEach(s => s.addEventListener('change', () => { buildConvCharts(); buildOrder(); }));
+  // Order trend (daily / cumulative)
+  let ordChart = null, mode = 'daily';
+  function series(src) {
+    const arr = src.ord.slice(0, N);
+    if (mode === 'daily') return arr;
+    let c = 0; return arr.map(v => (c += v));
+  }
+  function ordSlice(per) {
+    const arr = sliceDaily('ord', per, false);
+    if (mode === 'daily') return arr;
+    let c = 0; return arr.map(v => (c += v));
+  }
+  function buildOrder() {
+    const el = document.getElementById('ct2a-order');
+    if (!el) return;
+    if (ordChart) ordChart.destroy();
+    ordChart = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: ordSlice('m'), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: 2, tension: 0.25, fill: mode === 'cum'},
+        {label: 'LMTD',   data: ordSlice('l'), borderColor: '#93c5fd', borderWidth: 2, pointRadius: 2, tension: 0.25},
+        {label: 'Target', data: allBase() ? series(T.tgt).map(v => Math.round(v * 10) / 10) : Array.from({length: N}, () => null), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: 0, tension: 0.1},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: mode === 'daily' ? 'Orders per day · FS' : 'Cumulative orders · FS', align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => ctx.dataset.label + (ctx.dataset.label === 'LMTD' ? ' (Jun ' + (ctx.dataIndex + 1) + ')' : '') + ': ' + ctx.parsed.y}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {beginAtZero: true, grid: {color: '#eee'}, ticks: {font: {size: 9}}, title: {display: true, text: 'Orders', font: {size: 9}}}}}
+    });
+  }
+  const bD = document.getElementById('ct2a-ord-daily'), bC = document.getElementById('ct2a-ord-cum');
+  function setBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  bD.addEventListener('click', () => { mode = 'daily'; setBtn(bD, bC); buildOrder(); });
+  bC.addEventListener('click', () => { mode = 'cum';   setBtn(bC, bD); buildOrder(); });
+  buildOrder();
+})();
+</script>
+</body></html>
