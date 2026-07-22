@@ -1,0 +1,1440 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<meta charset="UTF-8"><title>Nashik · City Report · Jul 21, 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF7; --surface:#FFFFFF; --ink:#14110F; --ink-2:#3D3833;
+    --muted:#7A746E; --line:#E8E4DE; --line-2:#D9D3CB;
+    --accent:#F6A623; --green:#1E8A4C; --green-soft:#DEF1E3;
+    --amber:#B97400; --amber-soft:#FCEBC8; --red:#B43A2A; --red-soft:#FADCD3;
+    --blue:#2F5BB7;
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',-apple-system,system-ui,sans-serif; font-size:12px; line-height:1.4; }
+  .wrap { max-width:1200px; margin:16px auto; padding:22px 28px; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08); border-radius:6px; }
+  header { display:flex; align-items:baseline; justify-content:space-between;
+    padding-bottom:11px; border-bottom:2px solid var(--ink); margin-bottom:16px; }
+  header h1 { font-size:19px; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  header .meta { font-size:11px; color:var(--muted); font-weight:500; }
+  .num { font-variant-numeric:tabular-nums; }
+  .section-title { font-size:10.5px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.1em; margin:18px 0 9px;
+    padding-bottom:5px; border-bottom:1px solid var(--line); }
+  .section-title:first-child { margin-top:0; }
+  .sub-title { font-size:10px; font-weight:700; color:var(--ink-2);
+    text-transform:uppercase; letter-spacing:0.08em; margin:12px 0 6px; }
+
+  .callouts { padding:14px 18px 14px 20px; border-radius:0 4px 4px 0;
+    background:#FFFDF6; border-left:4px solid var(--accent); margin-bottom:16px; }
+  .callouts .callout-title { font-size:10px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px;
+    padding-bottom:6px; border-bottom:1px solid rgba(246,166,35,0.25); }
+  .buckets-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; }
+  .bucket { min-width:0; }
+  .bucket-lbl { font-size:10.5px; font-weight:700; color:var(--ink);
+    margin-bottom:4px; padding-bottom:3px; border-bottom:1px dotted var(--line-2); }
+  .bucket.empty .bucket-lbl { color:var(--muted); font-weight:600; }
+  .bucket-empty { font-size:10.5px; color:var(--green); font-style:italic;
+    padding-left:2px; margin-top:2px; }
+  .bucket.empty .bucket-empty { color:var(--muted); }
+  .callouts ul { margin:0; padding-left:16px; font-size:11px; }
+  .callouts li { margin-bottom:3px; line-height:1.45; }
+  .callouts li.good { color:var(--green); }
+  .callouts li.bad  { color:var(--red); }
+  .callouts li b { font-weight:600; color:var(--ink); }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .kpi { padding:8px 10px; border-radius:4px; background:#FAFAF7;
+    border-left:3px solid var(--line-2); }
+  .kpi.good  { border-left-color:var(--green); background:var(--green-soft); }
+  .kpi.bad   { border-left-color:var(--red);   background:var(--red-soft); }
+  .kpi.amber { border-left-color:var(--amber); background:var(--amber-soft); }
+  .kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--muted); font-weight:600; }
+  .kpi .big { font-size:16px; font-weight:700; letter-spacing:-0.01em; }
+  .kpi .meta { font-size:10px; color:var(--ink-2); margin-top:2px; }
+  .kpi .pctd { font-size:11px; font-weight:600; }
+  .kpi.good .pctd  { color:var(--green); }
+  .kpi.bad .pctd   { color:var(--red); }
+  .kpi.amber .pctd { color:var(--amber); }
+
+  .funnel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .funnel-card { padding:9px 10px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .funnel-card .stage { font-size:10px; font-weight:600; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+  .funnel-card .big  { font-size:18px; font-weight:700; letter-spacing:-0.01em; line-height:1.1; }
+  .funnel-card .meta { font-size:10px; color:var(--muted); }
+  .funnel-card .kpi-row { display:flex; justify-content:space-between; align-items:baseline;
+    font-size:10px; padding-top:5px; margin-top:5px; border-top:1px dashed var(--line); }
+  .funnel-card .kpi-row .lbl { color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; font-size:9px; }
+  .funnel-card .kpi-row .val { font-weight:600; font-variant-numeric:tabular-nums; }
+  .funnel-card.good .big  { color:var(--green); }
+  .funnel-card.bad  .big  { color:var(--red); }
+  .funnel-card.amber .big { color:var(--amber); }
+
+  .chan-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .chan-tile { padding:6px 9px; border-radius:3px; font-size:11px; background:#FAFAF7;
+    border:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .chan-tile .ch { font-weight:600; margin-right:6px; }
+  .chan-tile.short { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .chan-tile.over  { background:var(--green-soft); border-color:rgba(30,138,76,0.2); }
+
+  /* TAT + AOV + ageing side-by-side */
+  .side-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .side-card { padding:12px 14px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .side-card h4 { margin:0 0 6px; font-size:11px; font-weight:700; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.06em; }
+  .big-metric { font-size:22px; font-weight:700; letter-spacing:-0.01em; line-height:1; }
+  .big-metric.good { color:var(--green); }
+  .big-metric.bad  { color:var(--red); }
+  .big-metric.amber { color:var(--amber); }
+  .metric-note { font-size:10.5px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
+  .trend-chip { display:inline-block; padding:1px 7px; border-radius:3px; font-size:10px;
+    font-weight:600; margin-left:6px; }
+  .trend-chip.up  { background:var(--red-soft);   color:var(--red);   border:1px solid rgba(180,58,42,0.2); }
+  .trend-chip.dn  { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .trend-chip.flat{ background:#F1ECE5;           color:var(--muted); border:1px solid var(--line); }
+
+  .ageing-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:6px; }
+  .ageing-tile { padding:8px 6px; border-radius:3px; background:#FAFAF7;
+    border:1px solid var(--line); text-align:center; }
+  .ageing-tile.high { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .ageing-tile.mid  { background:var(--amber-soft); border-color:rgba(185,116,0,0.15); }
+  .ageing-tile .b-label { font-size:10px; color:var(--muted); font-weight:600;
+    text-transform:uppercase; letter-spacing:0.04em; }
+  .ageing-tile .b-count { font-size:16px; font-weight:700; margin-top:2px; }
+  .ageing-tile .b-pct   { font-size:10px; color:var(--ink-2); }
+
+  table.sc { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }
+  table.sc thead th { background:#F5F1EA; color:var(--ink-2); font-weight:600;
+    padding:6px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-size:10px; white-space:nowrap; letter-spacing:0.02em; }
+  table.sc thead th:first-child, table.sc thead th.left { text-align:left; }
+  table.sc tbody td { padding:5px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums; }
+  table.sc tbody td.left { text-align:left; font-weight:500; }
+  table.sc tbody tr.good td { background:rgba(30,138,76,0.06); }
+  table.sc tbody tr.bad  td { background:rgba(180,58,42,0.06); }
+  table.sc tbody tr.sc-row { cursor:pointer; }
+  table.sc tbody tr.sc-row:hover td { background:rgba(0,0,0,0.03); }
+  table.sc tbody tr.sc-row.good:hover td { background:rgba(30,138,76,0.11); }
+  table.sc tbody tr.sc-row.bad:hover  td { background:rgba(180,58,42,0.11); }
+  table.sc tbody tr.group-hdr td { background:#EEEAE0; font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); padding:5px 8px;
+    border-bottom:1px solid var(--line-2); border-top:2px solid var(--line-2); }
+  table.sc tbody tr.group-hdr.good td { background:var(--green-soft); color:var(--green); }
+  table.sc tbody tr.group-hdr.bad  td { background:var(--red-soft); color:var(--red); }
+  table.sc tbody tr.group-hdr.mid  td { background:#F1ECE5; }
+  table.sc tbody tr.total-row td { background:#EEEAE0 !important; font-weight:700;
+    border-top:2px solid var(--line-2); font-size:11px; }
+  tr.sc-drill { display:none; }
+  tr.sc-drill.open { display:table-row; }
+  tr.sc-drill td { background:#FBF8F2 !important; padding:8px 12px 10px !important; }
+  .drill-inner { display:grid; gap:8px; }
+  .drill-inner.drill-4 { grid-template-columns:repeat(4,1fr); }
+  .drill-inner.drill-5 { grid-template-columns:repeat(5,1fr); }
+  .drill-label { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:5px; }
+  .pending-detail-tbl { width:auto; max-width:100%; border-collapse:collapse; background:#fff; margin:0; }
+  .pending-detail-tbl th { background:#F5F1EA; color:var(--ink); font-weight:600; font-size:10px;
+    text-align:left; padding:5px 10px; border-bottom:1px solid var(--line); }
+  .pending-detail-tbl td.detail-cell { padding:5px 10px; font-size:10.5px; border-bottom:1px solid #F0EAE0;
+    color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .pending-detail-tbl tr:last-child td { border-bottom:none; }
+  .drill-tile { background:#fff; border:1px solid var(--line); border-radius:3px; padding:6px 8px; font-size:10px; }
+  .drill-tile .dc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+  .drill-tile .dv { font-size:11px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .drill-tile .dv b { color:var(--ink); }
+  .expand-hint { color:var(--muted); font-size:9px; margin-left:4px; }
+
+  .pill { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600; }
+  .pill.good { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .pill.bad  { background:var(--red-soft); color:var(--red); border:1px solid rgba(180,58,42,0.2); }
+  .pill.mid  { background:#F1ECE5; color:var(--muted); border:1px solid var(--line); }
+  .trend { font-size:10px; font-weight:600; margin-left:3px; }
+  .trend.up  { color:var(--green); }
+  .trend.dn  { color:var(--red); }
+  .trend.flat { color:var(--muted); }
+
+  .off-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+  .off-tile { padding:8px 10px; border-radius:3px; background:#FAFAF7; border:1px solid var(--line); }
+  .off-tile.alarm { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .off-tile .oc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; }
+  .off-tile .op { font-size:15px; font-weight:700; margin:2px 0; letter-spacing:-0.01em; }
+  .off-tile .om { font-size:10px; color:var(--muted); }
+  .off-tile.alarm .op { color:var(--red); }
+
+  .footnote { margin-top:14px; padding:10px 12px; background:#FAFAF7;
+    border-left:3px solid var(--muted); font-size:10.5px; color:var(--ink-2); line-height:1.5; }
+</style></head><body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Nashik · City Sales Report</h1>
+    <div class="meta" style="font-size:11px; color:#3D3833; margin-top:2px;">
+      Jul MTD (Jul 1 – Jul 21, 2026) · LMTD: Jun 1 – Jun 21
+    </div>
+  </div>
+  <div class="meta" style="text-align:right;">
+    <div><b style="color:var(--ink); font-size:14px;">97 orders MTD</b> · target 132</div>
+    <div>Field Sales only</span></div></div>
+  </div>
+</header>
+
+<div class="callouts">
+  <div class="callout-title">Key alerts · MTD (Jul 1 – Jul 21, 2026) · Nashik Field Sales</div>
+  <div class="buckets-grid"><div class="bucket"><div class="bucket-lbl">1 · Lead sufficiency (BQL)</div><ul><li class="bad">⚠ <b>Digital</b> short by 122 (87.1% of plan · gap -122)</li><li class="bad">⚠ <b>Referral</b> short by 40 (61.9% of plan · gap -40)</li></ul></div><div class="bucket"><div class="bucket-lbl">2 · Funnel alerts (BQL → MS → MD → Order → HOTO)</div><ul><li class="bad">⚠ <b>MS → MD</b> 75.4% vs target 90.3% (-14.9pp)</li><li class="bad">⚠ <b>Order → HOTO</b> 71.1% vs target 80.0% (-8.9pp)</li></ul></div><div class="bucket"><div class="bucket-lbl">3 · HOTO TAT + Pending order ageing</div><ul><li class="bad">⚠ <b>64% of pending orders aged &gt;4 days</b> · 16 of 25</li></ul></div><div class="bucket"><div class="bucket-lbl">4 · AOV insights</div><ul><li class="bad">⚠ <b>AOV decreasing</b> ₹255k → ₹248k (-2.8%) · likely driver: <b>GoodZero Uno</b> 64.0% → 75.3% (+11.3pp)</li><li class="bad">⚠ <b>GoodZero Uno share rising</b> 64.0% → 75.3% (+11.3pp vs LMTD) (intra-MTD +8.8pp)</li></ul></div><div class="bucket"><div class="bucket-lbl">5 · SC-level performance (overall MD → Order)</div><ul><li class="bad">⚠ <b>sahil.sable</b> — 30 MDs MTD, only 13.3% conv, recent 5d 0.0% (↓ worsening)</li><li class="bad">⚠ <b>pratik.kamankar</b> — 30 MDs MTD, only 23.3% conv, recent 5d 14.3% (↓ worsening)</li><li class="bad">⚠ <b>sameer.katare</b> — 19 MDs MTD, only 15.8% conv, recent 5d 16.7% (flat)</li><li class="good">✓ <b>yash.kakde</b> — 26 MDs, 53.8% conv (strong), recent 5d 66.7% ↑</li><li class="good">✓ <b>ankit.kamle</b> — 26 MDs, 34.6% conv (strong), recent 5d 16.7% ↓</li><li class="good">✓ <b>arshad.sayyed</b> — 26 MDs, 30.8% conv (strong), recent 5d 62.5% ↑</li></ul></div><div class="bucket"><div class="bucket-lbl">6 · Offering alert · SC level (SSE Blue > 10% or GZ Uno > 20%)</div><ul><li class="bad">⚠ <b>yash.kakde</b> · 14 orders · SSE 0 (0%) · <b>Uno 13 (93%)</b></li><li class="bad">⚠ <b>zaki.s</b> · 10 orders · SSE 0 (0%) · <b>Uno 8 (80%)</b></li><li class="bad">⚠ <b>yogesh.t</b> · 10 orders · <b>SSE 2 (20%)</b> · <b>Uno 7 (70%)</b></li><li class="bad">⚠ <b>ankit.kamle</b> · 9 orders · SSE 0 (0%) · <b>Uno 7 (78%)</b></li><li class="bad">⚠ <b>arshad.sayyed</b> · 8 orders · SSE 0 (0%) · <b>Uno 7 (88%)</b></li><li class="bad">⚠ <b>anil.tarte</b> · 7 orders · SSE 0 (0%) · <b>Uno 6 (86%)</b></li><li class="bad">⚠ <b>pratik.kamankar</b> · 7 orders · SSE 0 (0%) · <b>Uno 5 (71%)</b></li><li class="bad">⚠ <b>tejas.yeole</b> · 7 orders · <b>SSE 1 (14%)</b> · <b>Uno 3 (43%)</b></li></ul></div><div class="bucket"><div class="bucket-lbl">7 · kW conversion alert · SC level (≤ 3.24 kW < 20% or > 3.24 kW < 30%)</div><ul><li class="bad">⚠ <b>sahil.sable</b> · overall 13.3% (4/30) · <b>&le;3.24kW 16.7%</b> (4/24) · <b>&gt;3.24kW 0.0%</b> (0/6)</li><li class="bad">⚠ <b>pratik.kamankar</b> · overall 23.3% (7/30) · &le;3.24kW 24.0% (6/25) · <b>&gt;3.24kW 20.0%</b> (1/5)</li><li class="bad">⚠ <b>tejas.yeole</b> · overall 25.0% (7/28) · &le;3.24kW 26.1% (6/23) · <b>&gt;3.24kW 20.0%</b> (1/5)</li><li class="bad">⚠ <b>arshad.sayyed</b> · overall 30.8% (8/26) · &le;3.24kW 33.3% (7/21) · <b>&gt;3.24kW 20.0%</b> (1/5)</li><li class="bad">⚠ <b>sameer.katare</b> · overall 15.8% (3/19) · <b>&le;3.24kW 16.7%</b> (3/18) · &gt;3.24kW – (0/1)</li><li class="bad">⚠ <b>divyanshu.mali</b> · overall 11.8% (2/17) · <b>&le;3.24kW 14.3%</b> (2/14) · &gt;3.24kW – (0/3)</li><li class="bad">⚠ <b>maher.aher</b> · overall 0.0% (0/7) · <b>&le;3.24kW 0.0%</b> (0/6) · &gt;3.24kW – (0/1)</li></ul></div><div class="bucket"><div class="bucket-lbl">8 · Lead score > 7 conversion · SC level (MD → Order)</div><ul><li class="bad">⚠ <b>maher.aher</b> · 0/5 = 0.0% conv on lead-score &gt;7 MDs</li><li class="bad">⚠ <b>sahil.sable</b> · 1/11 = 9.1% conv on lead-score &gt;7 MDs</li><li class="bad">⚠ <b>pratik.kamankar</b> · 2/11 = 18.2% conv on lead-score &gt;7 MDs</li></ul></div></div>
+</div>
+
+<div class="section-title">1 · BQL by channel · shortfall check</div>
+<div class="kpi-grid"><div class="kpi bad">
+      <div class="label">Digital</div>
+      <div class="big num">823 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 945</span></div>
+      <div class="meta"><span class="pctd">87.1%</span> · Δ -122 · SD 31</div>
+    </div>
+<div class="kpi bad">
+      <div class="label">Referral</div>
+      <div class="big num">65 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 105</span></div>
+      <div class="meta"><span class="pctd">61.9%</span> · Δ -40 · SD 0</div>
+    </div>
+<div class="kpi good">
+      <div class="label">BTL</div>
+      <div class="big num">0 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 0</span></div>
+      <div class="meta"><span class="pctd">–</span> · Δ +0 · SD 0</div>
+    </div>
+<div class="kpi amber">
+      <div class="label">SolarPro</div>
+      <div class="big num">41 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 42</span></div>
+      <div class="meta"><span class="pctd">97.6%</span> · Δ -1 · SD 3</div>
+    </div></div>
+
+<div class="section-title">2 · Funnel conversion (Field Sales) · MTD + same-day vs target</div>
+<div class="funnel-grid"><div class="funnel-card good">
+      <div class="stage">BQL → MS</div>
+      <div class="big num">50.1%</div>
+      <div class="meta">492 of 983 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">47.3% (+2.8pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 21</span><span class="val">94.4% · 34/36 (+41.6pp)</span></div>
+    </div>
+<div class="funnel-card bad">
+      <div class="stage">MS → MD</div>
+      <div class="big num">75.4%</div>
+      <div class="meta">371 of 492 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">90.3% (-14.9pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 21</span><span class="val">82.4% · 28/34 (-6.9pp)</span></div>
+    </div>
+<div class="funnel-card amber">
+      <div class="stage">MD → Order</div>
+      <div class="big num">26.1%</div>
+      <div class="meta">97 of 371 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">27.8% (-1.6pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 21</span><span class="val">25.0% · 7/28 (-3.0pp)</span></div>
+    </div>
+<div class="funnel-card bad">
+      <div class="stage">Order → HOTO</div>
+      <div class="big num">71.1%</div>
+      <div class="meta">69 of 97 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">80.0% (-8.9pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Jul 21</span><span class="val">71.4% · 5/7 (-8.6pp)</span></div>
+    </div></div>
+
+<div class="section-title">2a · Funnel conversion trends · daily · MTD vs LMTD vs Target</div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  Daily conversion at each stage — <b>MTD</b> (solid blue) vs <b>LMTD</b> same June span (light blue) vs <b>Target</b> (amber dashed, from the July plan's daily stage ratios). Y-axis fixed 0–100%: days that genuinely exceed 100% are pinned at the top as ▲ triangles with the true value on hover. Gaps = zero volume in the denominator that day.
+</div>
+<div style="display:flex; gap:12px; margin:0 0 8px; align-items:flex-end; flex-wrap:wrap;">
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Channel<br>
+    <select id="ct2a-ch" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All channels</option>
+      <option>Digital</option><option>Referral</option><option>SolarPro</option><option>BTL</option><option>Others</option>
+    </select></label>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Lead score<br>
+    <select id="ct2a-ls" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All lead scores</option>
+      <option>0-2</option><option>2-5</option><option>5-7</option><option>7-9</option><option>9-10</option>
+    </select></label>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">kW (MD→Ord &amp; Ord→HOTO)<br>
+    <select id="ct2a-kw" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All kW buckets</option>
+      <option>≤3.24 kW</option><option>3.24–5.4 kW</option><option>&gt;5.4 kW</option><option>Unknown</option>
+    </select></label>
+  <div style="display:flex; gap:6px; margin-left:auto;">
+    <button id="ct2a-conv-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-conv-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div style="font-size:10px; color:var(--muted); margin:-4px 0 8px;">Channel &amp; lead-score filters apply to all five charts; kW applies to MD→Order and Order→HOTO only. Target curve shows only when all three filters are at "All" (the plan has no lead-score/kW splits).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-bqlms"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-msmd"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-mdord"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-ordhoto"></canvas></div></div>
+</div>
+<div style="display:flex; align-items:center; gap:12px; margin:16px 0 8px;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink);">Order trend · MTD vs LMTD vs Target</div>
+  <div style="margin-left:auto; display:flex; gap:6px;">
+    <button id="ct2a-ord-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-ord-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:240px;"><canvas id="ct2a-order"></canvas></div></div>
+
+<div class="section-title">2b · On-spot conversion (Field Sales) · order booked same day as the meeting</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>MTD (Jul 1 – Jul 21)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;">58.8%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">57 on-spot / 97 total FS orders</div>
+    <div style="font-size:11px; margin-top:4px; font-weight:700; color:var(--green);">+9.2pp vs LMTD</div>
+  </div>
+  <div class="side-card">
+    <h4>LMTD (Jun 1 – Jun 21)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink-2); font-variant-numeric:tabular-nums;">49.5%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">55 on-spot / 111 total FS orders</div>
+  </div>
+</div>
+<div style="font-size:10.5px; color:var(--muted); margin:4px 0 0; line-height:1.5;">On-spot = the lead's meeting-done date equals its order date. Denominator = all FS orders in the period.</div>
+
+<div class="section-title">3 · Channel BQL → MD &amp; MD → Order conversion · MTD (all channels)</div>
+<div class="chan-strip"><div class="chan-tile short">
+      <span class="ch">Digital</span> BQL→MD: 300/823 = <b>36.5%</b> · tgt 42.7% (-6.2pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 55/300 = <b>18.3%</b>
+    </div>
+<div class="chan-tile over">
+      <span class="ch">Referral</span> BQL→MD: 58/65 = <b>89.2%</b> · tgt 42.7% (+46.6pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 40/58 = <b>69.0%</b>
+    </div>
+<div class="chan-tile ">
+      <span class="ch">BTL</span> BQL→MD: 0/0 = <b>–</b> · tgt 42.7% (–)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 0/0 = <b>–</b>
+    </div>
+<div class="chan-tile over">
+      <span class="ch">SolarPro</span> BQL→MD: 21/41 = <b>51.2%</b> · tgt 42.7% (+8.5pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 6/21 = <b>28.6%</b>
+    </div></div>
+
+<div class="section-title">4 · Order → HOTO TAT · 5 · Pending order ageing</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Order → HOTO TAT (Field Sales · MTD)</h4>
+    
+    <div class="big-metric amber">2.0 <span style="font-size:14px; color:var(--muted); font-weight:600;">days</span>
+      <span class="trend-chip flat">→ flat</span>
+    </div>
+    <div class="metric-note">Based on <b>65 FS orders</b> placed in MTD (Jul 1-9) that also completed HOTO in the same window. First half 2.0d → second half 2.0d (+0.1d).</div>
+    <div style="font-size:9px; color:var(--muted); font-weight:600; margin-top:8px; text-transform:uppercase; letter-spacing:0.05em;">Daily avg TAT · Jul 1 → Jul 21 <span style="color:#B43A2A;">▬</span> line, <span style="color:#7A746E;">- - -</span> MTD avg</div>
+    <svg viewBox="0 0 320 60" width="100%" height="60" preserveAspectRatio="xMidYMid meet" style="display:block; margin-top:6px;">
+      <line x1="8" x2="312" y1="26.0" y2="26.0" stroke="#7A746E" stroke-width="1" stroke-dasharray="2,2"/>
+      <polyline points="23.2,46.0 38.4,41.0 53.6,26.0 68.8,26.0 99.2,32.7 114.4,31.0 129.6,18.9 144.8,6.0 160.0,26.0 175.2,36.0 205.6,26.0 220.8,20.3 236.0,18.5 251.2,39.3 266.4,28.5 296.8,26.0 312.0,14.0" fill="none" stroke="#B43A2A" stroke-width="1.6"/>
+      <circle cx="23.2" cy="46.0" r="1.8" fill="#B43A2A"/><circle cx="38.4" cy="41.0" r="1.8" fill="#B43A2A"/><circle cx="53.6" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="68.8" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="99.2" cy="32.7" r="1.8" fill="#B43A2A"/><circle cx="114.4" cy="31.0" r="1.8" fill="#B43A2A"/><circle cx="129.6" cy="18.9" r="1.8" fill="#B43A2A"/><circle cx="144.8" cy="6.0" r="1.8" fill="#B43A2A"/><circle cx="160.0" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="175.2" cy="36.0" r="1.8" fill="#B43A2A"/><circle cx="205.6" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="220.8" cy="20.3" r="1.8" fill="#B43A2A"/><circle cx="236.0" cy="18.5" r="1.8" fill="#B43A2A"/><circle cx="251.2" cy="39.3" r="1.8" fill="#B43A2A"/><circle cx="266.4" cy="28.5" r="1.8" fill="#B43A2A"/><circle cx="296.8" cy="26.0" r="1.8" fill="#B43A2A"/><circle cx="312.0" cy="14.0" r="1.8" fill="#B43A2A"/>
+      <text x="8.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 01</text><text x="160.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 11</text><text x="312.0" y="58" font-size="8" fill="#7A746E" text-anchor="middle">Jul 21</text>
+    </svg>
+  </div>
+  <div class="side-card">
+    <h4>Pending FS orders ageing (June only · not converted to HOTO)</h4>
+    
+<div style="font-size:11px; color:var(--muted); margin-bottom:4px;">
+  Total FS orders in June: <b style="color:var(--ink);">97</b>
+  = handed over <b style="color:var(--green);">65</b>
+  + placed today, no HOTO yet <b style="color:var(--muted);">7</b>
+  + <b style="color:var(--red);">pending 1+ day: 25</b>
+  <span style="color:var(--muted);">(of which aged &gt;4d: <b style="color:var(--red);">16</b>)</span>
+</div>
+<div class="ageing-grid"><div class="ageing-tile ">
+      <div class="b-label">1-2 days</div>
+      <div class="b-count num">3</div>
+      <div class="b-pct">12%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">2-3 days</div>
+      <div class="b-count num">5</div>
+      <div class="b-pct">20%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">3-4 days</div>
+      <div class="b-count num">1</div>
+      <div class="b-pct">4%</div>
+    </div><div class="ageing-tile mid">
+      <div class="b-label">4-6 days</div>
+      <div class="b-count num">2</div>
+      <div class="b-pct">8%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">6-10 days</div>
+      <div class="b-count num">1</div>
+      <div class="b-pct">4%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">>10 days</div>
+      <div class="b-count num">13</div>
+      <div class="b-pct">52%</div>
+    </div></div>
+
+  </div>
+</div>
+
+<div class="section-title">6 · AOV and offering share</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Average Order Value</h4>
+    
+<div class="big-metric bad">₹248k
+  <span style="font-size:14px; color:var(--muted); font-weight:600;">MTD</span>
+  <span class="trend-chip up">↓ -2.8% vs LMTD</span>
+</div>
+<div class="metric-note">LMTD AOV was ₹255k · Δ ₹-7k
+  · based on 97 MTD orders / 111 LMTD orders.</div>
+  </div>
+  <div class="side-card">
+    <h4>Offering share (MTD vs LMTD)</h4>
+    <div class="off-strip"><div class="off-tile ">
+      <div class="oc">GoodZero</div>
+      <div class="op">13.4%</div>
+      <div class="om">LMTD 20.7% · Δ ↓ -7.3pp · intra-MTD -4.6pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">GoodZero Pro</div>
+      <div class="op">6.2%</div>
+      <div class="om">LMTD 7.2% · Δ ↓ -1.0pp · intra-MTD -5.3pp</div>
+    </div>
+<div class="off-tile alarm">
+      <div class="oc">GoodZero Uno</div>
+      <div class="op">75.3%</div>
+      <div class="om">LMTD 64.0% · Δ ↑ +11.3pp · intra-MTD +8.8pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">SSE Blue</div>
+      <div class="op">5.2%</div>
+      <div class="om">LMTD 8.1% · Δ ↓ -3.0pp · intra-MTD +1.1pp</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section-title">7 · Overall kW-bucket & Lead-score conversion · MD → Order (Nashik FS · MTD)</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>kW-bucket conversion</h4>
+    
+<div class="big-metric bad">26.1%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall MD → Order</span>
+</div>
+<div class="metric-note">97 orders from 371 MDs (FS · June).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--good);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">≤ 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--good);">27.4%</div>
+    <div style="font-size:10px; color:var(--muted);">90/328 MDs · 88% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 20%</div>
+  </div>
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--bad);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">&gt; 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--bad);">16.3%</div>
+    <div style="font-size:10px; color:var(--muted);">7/43 MDs · 12% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 30%</div>
+  </div>
+</div>
+  </div>
+  <div class="side-card">
+    <h4>Lead score &gt; 7 conversion</h4>
+    
+<div class="big-metric good">38.4%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall</span>
+</div>
+<div class="metric-note">58 orders from 151 lead-score &gt;7 MDs (FS · June).
+  Overall MD→Order = 26.1% · <b>12.3pp higher</b> than overall.</div>
+<div style="font-size:9px; color:var(--muted); font-weight:700; margin-top:10px; text-transform:uppercase; letter-spacing:0.05em;">By source · lead-score &gt;7 MDs → orders</div>
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:4px;">
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Digital</div>
+        <div style="font-size:14px; font-weight:700; color:var(--bad); margin-top:1px;">20.2%</div>
+        <div style="font-size:9px; color:var(--muted);">21/104</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Referral</div>
+        <div style="font-size:14px; font-weight:700; color:var(--good); margin-top:1px;">77.8%</div>
+        <div style="font-size:9px; color:var(--muted);">35/45</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">BTL</div>
+        <div style="font-size:14px; font-weight:700; color:var(--muted); margin-top:1px;">–</div>
+        <div style="font-size:9px; color:var(--muted);">0/0</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">SolarPro</div>
+        <div style="font-size:14px; font-weight:700; color:var(--good); margin-top:1px;">100.0%</div>
+        <div style="font-size:9px; color:var(--muted);">1/1</div>
+      </div></div>
+  </div>
+</div>
+
+<div class="section-title">8 · SC-level view · MD → Order productivity (Nashik · ≥ 14 MDs MTD) <span class="expand-hint">click any row for channel + lead-score breakdown</span></div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">SC (email prefix)</th>
+    <th>SC Index (Bucket)</th>
+    <th>MDs MTD</th><th>Ord MTD</th><th>Conv MTD</th><th>On-spot</th>
+    <th>MDs 5d</th><th>Ord 5d</th><th>Conv 5d</th>
+    <th>MDs SD</th><th>Ord SD</th>
+    <th>Status</th>
+  </tr></thead>
+  <tbody><tr class="group-hdr good"><td colspan="12">Good performers · top-quartile conversion (double down) · 5 SCs</td></tr><tr class="sc-row good" data-sc="zaki.s@solarsquare.in">
+      <td class="left">zaki.s <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>6.70</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>33</td><td>10</td><td>30.3%</td><td>40.0% <span style="color:var(--muted); font-size:10px;">(4/10)</span></td>
+      <td>6</td><td>1</td><td>16.7% <span class="trend dn">-13.6</span></td>
+      <td>1</td><td>1</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="zaki.s@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>23</b> · Ord <b>4</b> · Conv <b>17.4%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>4</b> · Ord <b>4</b> · Conv <b>100.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>1</b> · Conv <b>20.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>7</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>9</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>10</b> · Ord <b>2</b> · Conv <b>20.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>2</b> · Ord <b>2</b> · Conv <b>100.0%</b></div></div></div></td></tr><tr class="sc-row good" data-sc="yogesh.t@solarsquare.in">
+      <td class="left">yogesh.t <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>6.21</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>33</td><td>10</td><td>30.3%</td><td>60.0% <span style="color:var(--muted); font-size:10px;">(6/10)</span></td>
+      <td>9</td><td>4</td><td>44.4% <span class="trend up">↑+14.1</span></td>
+      <td>3</td><td>0</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="yogesh.t@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>22</b> · Ord <b>4</b> · Conv <b>18.2%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>7</b> · Ord <b>5</b> · Conv <b>71.4%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>7</b> · Ord <b>1</b> · Conv <b>14.3%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>6</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>3</b> · Conv <b>50.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>9</b> · Ord <b>1</b> · Conv <b>11.1%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>5</b> · Ord <b>4</b> · Conv <b>80.0%</b></div></div></div></td></tr><tr class="sc-row good" data-sc="ankit.kamle@solarsquare.in">
+      <td class="left">ankit.kamle <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.90</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+      <td>26</td><td>9</td><td>34.6%</td><td>55.6% <span style="color:var(--muted); font-size:10px;">(5/9)</span></td>
+      <td>6</td><td>1</td><td>16.7% <span class="trend dn">-17.9</span></td>
+      <td>1</td><td>0</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="ankit.kamle@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>18</b> · Ord <b>5</b> · Conv <b>27.8%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>5</b> · Ord <b>4</b> · Conv <b>80.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>7</b> · Ord <b>1</b> · Conv <b>14.3%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>2</b> · Conv <b>33.3%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>3</b> · Ord <b>2</b> · Conv <b>66.7%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>5</b> · Ord <b>4</b> · Conv <b>80.0%</b></div></div></div></td></tr><tr class="sc-row good" data-sc="yash.kakde@solarsquare.in">
+      <td class="left">yash.kakde <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.76</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+      <td>26</td><td>14</td><td>53.8%</td><td>64.3% <span style="color:var(--muted); font-size:10px;">(9/14)</span></td>
+      <td>6</td><td>4</td><td>66.7% <span class="trend up">↑+12.8</span></td>
+      <td>2</td><td>1</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="yash.kakde@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>16</b> · Ord <b>7</b> · Conv <b>43.8%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>7</b> · Ord <b>5</b> · Conv <b>71.4%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>1</b> · Ord <b>1</b> · Conv <b>100.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>4</b> · Ord <b>3</b> · Conv <b>75.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>4</b> · Ord <b>2</b> · Conv <b>50.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>4</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>10</b> · Ord <b>3</b> · Conv <b>30.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>4</b> · Ord <b>4</b> · Conv <b>100.0%</b></div></div></div></td></tr><tr class="sc-row good" data-sc="arshad.sayyed@solarsquare.in">
+      <td class="left">arshad.sayyed <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.15</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>26</td><td>8</td><td>30.8%</td><td>50.0% <span style="color:var(--muted); font-size:10px;">(4/8)</span></td>
+      <td>8</td><td>5</td><td>62.5% <span class="trend up">↑+31.7</span></td>
+      <td>2</td><td>1</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="arshad.sayyed@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>22</b> · Ord <b>4</b> · Conv <b>18.2%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>3</b> · Ord <b>4</b> · Conv <b>133.3%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>1</b> · Conv <b>20.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>7</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>8</b> · Ord <b>5</b> · Conv <b>62.5%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>3</b> · Ord <b>1</b> · Conv <b>33.3%</b></div></div></div></td></tr><tr class="group-hdr mid"><td colspan="12">Mid tier · 4 SCs</td></tr><tr class="sc-row mid" data-sc="anil.tarte@solarsquare.in">
+      <td class="left">anil.tarte <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.52</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+      <td>28</td><td>7</td><td>25.0%</td><td>57.1% <span style="color:var(--muted); font-size:10px;">(4/7)</span></td>
+      <td>8</td><td>2</td><td>25.0% <span class="trend flat">→</span></td>
+      <td>3</td><td>1</td>
+      <td><span class="pill mid">MID</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="anil.tarte@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>26</b> · Ord <b>4</b> · Conv <b>15.4%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>2</b> · Ord <b>2</b> · Conv <b>100.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>17</b> · Ord <b>5</b> · Conv <b>29.4%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>2</b> · Ord <b>1</b> · Conv <b>50.0%</b></div></div></div></td></tr><tr class="sc-row mid" data-sc="piyush.agnihotri@solarsquare.in">
+      <td class="left">piyush.agnihotri <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.31</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>28</td><td>7</td><td>25.0%</td><td>85.7% <span style="color:var(--muted); font-size:10px;">(6/7)</span></td>
+      <td>6</td><td>2</td><td>33.3% <span class="trend up">↑+8.3</span></td>
+      <td>1</td><td>1</td>
+      <td><span class="pill mid">MID</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="piyush.agnihotri@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>19</b> · Ord <b>3</b> · Conv <b>15.8%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>4</b> · Ord <b>3</b> · Conv <b>75.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>1</b> · Conv <b>20.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>3</b> · Ord <b>1</b> · Conv <b>33.3%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>11</b> · Ord <b>1</b> · Conv <b>9.1%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>6</b> · Ord <b>4</b> · Conv <b>66.7%</b></div></div></div></td></tr><tr class="sc-row mid" data-sc="tejas.yeole@solarsquare.in">
+      <td class="left">tejas.yeole <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>6.87</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>28</td><td>7</td><td>25.0%</td><td>42.9% <span style="color:var(--muted); font-size:10px;">(3/7)</span></td>
+      <td>9</td><td>4</td><td>44.4% <span class="trend up">↑+19.4</span></td>
+      <td>3</td><td>1</td>
+      <td><span class="pill mid">MID</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="tejas.yeole@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>21</b> · Ord <b>3</b> · Conv <b>14.3%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>3</b> · Ord <b>3</b> · Conv <b>100.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>2</b> · Ord <b>1</b> · Conv <b>50.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>4</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>7</b> · Ord <b>1</b> · Conv <b>14.3%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>8</b> · Ord <b>1</b> · Conv <b>12.5%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>5</b> · Ord <b>2</b> · Conv <b>40.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>4</b> · Ord <b>1</b> · Conv <b>25.0%</b></div></div></div></td></tr><tr class="sc-row mid" data-sc="darshan.wagh@solarsquare.in">
+      <td class="left">darshan.wagh <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>9.23</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+      <td>20</td><td>6</td><td>30.0%</td><td>100.0% <span style="color:var(--muted); font-size:10px;">(6/6)</span></td>
+      <td>4</td><td>2</td><td>50.0% <span class="trend up">↑+20.0</span></td>
+      <td>0</td><td>0</td>
+      <td><span class="pill mid">MID</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="darshan.wagh@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>9</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>4</b> · Ord <b>3</b> · Conv <b>75.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>7</b> · Ord <b>3</b> · Conv <b>42.9%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>3</b> · Conv <b>60.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>1</b> · Conv <b>16.7%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>7</b> · Ord <b>1</b> · Conv <b>14.3%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>1</b> · Ord <b>1</b> · Conv <b>100.0%</b></div></div></div></td></tr><tr class="group-hdr bad"><td colspan="12">Bad performers · bottom-quartile conversion (coaching candidates) · 4 SCs</td></tr><tr class="sc-row bad" data-sc="sahil.sable@solarsquare.in">
+      <td class="left">sahil.sable <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><span style="color:var(--muted);">NA</span></td>
+      <td>30</td><td>4</td><td>13.3%</td><td>75.0% <span style="color:var(--muted); font-size:10px;">(3/4)</span></td>
+      <td>5</td><td>0</td><td>0.0% <span class="trend dn">-13.3</span></td>
+      <td>1</td><td>0</td>
+      <td><span class="pill bad">BAD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="sahil.sable@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>20</b> · Ord <b>1</b> · Conv <b>5.0%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>2</b> · Ord <b>2</b> · Conv <b>100.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>4</b> · Ord <b>1</b> · Conv <b>25.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>6</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>8</b> · Ord <b>2</b> · Conv <b>25.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>10</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>1</b> · Ord <b>1</b> · Conv <b>100.0%</b></div></div></div></td></tr><tr class="sc-row bad" data-sc="pratik.kamankar@solarsquare.in">
+      <td class="left">pratik.kamankar <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>5.78</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>30</td><td>7</td><td>23.3%</td><td>28.6% <span style="color:var(--muted); font-size:10px;">(2/7)</span></td>
+      <td>7</td><td>1</td><td>14.3% <span class="trend dn">-9.0</span></td>
+      <td>2</td><td>0</td>
+      <td><span class="pill bad">BAD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="pratik.kamankar@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>27</b> · Ord <b>6</b> · Conv <b>22.2%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>2</b> · Ord <b>1</b> · Conv <b>50.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>8</b> · Ord <b>1</b> · Conv <b>12.5%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>6</b> · Ord <b>2</b> · Conv <b>33.3%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>9</b> · Ord <b>1</b> · Conv <b>11.1%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>2</b> · Ord <b>1</b> · Conv <b>50.0%</b></div></div></div></td></tr><tr class="sc-row bad" data-sc="sameer.katare@solarsquare.in">
+      <td class="left">sameer.katare <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>7.22</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>19</td><td>3</td><td>15.8%</td><td>100.0% <span style="color:var(--muted); font-size:10px;">(3/3)</span></td>
+      <td>6</td><td>1</td><td>16.7% <span class="trend flat">→</span></td>
+      <td>2</td><td>0</td>
+      <td><span class="pill bad">BAD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="sameer.katare@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>16</b> · Ord <b>1</b> · Conv <b>6.2%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>3</b> · Ord <b>2</b> · Conv <b>66.7%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>4</b> · Ord <b>1</b> · Conv <b>25.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>2</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>5</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>3</b> · Ord <b>2</b> · Conv <b>66.7%</b></div></div></div></td></tr><tr class="sc-row bad" data-sc="divyanshu.mali@solarsquare.in">
+      <td class="left">divyanshu.mali <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><b>5.55</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+      <td>17</td><td>2</td><td>11.8%</td><td>0% <span style="color:var(--muted); font-size:10px;">(0/2)</span></td>
+      <td>1</td><td>1</td><td>100.0% <span class="trend up">↑+88.2</span></td>
+      <td>1</td><td>0</td>
+      <td><span class="pill bad">BAD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="divyanshu.mali@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>15</b> · Ord <b>1</b> · Conv <b>6.7%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv">MD <b>2</b> · Ord <b>1</b> · Conv <b>50.0%</b></div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv">MD <b>2</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>3</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>7</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>4</b> · Ord <b>1</b> · Conv <b>25.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div></div></td></tr></tbody>
+</table>
+
+<div class="section-title">9 · Pending order ageing by SC · Nashik FS <span class="expand-hint">click any row to see order-level detail</span></div>
+<table class="sc">
+      <thead><tr>
+        <th class="left">SC (email prefix)</th>
+        <th>SC Index (Bucket)</th>
+        <th>Pending orders</th>
+        <th>HOTO MTD</th>
+        <th>Oldest (days)</th>
+        <th>Newest (days)</th>
+        <th>Avg age (days)</th>
+        <th>&gt; 4 days</th>
+        <th>&gt; 10 days</th>
+      </tr></thead>
+      <tbody><tr class="sc-row bad" data-sc="zaki.s@solarsquare.in">
+          <td class="left">zaki.s <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>6.70</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>4</b></td>
+          <td>5</td>
+          <td>13</td>
+          <td>11</td>
+          <td>11.8</td>
+          <td>4</td>
+          <td>4</td>
+        </tr>
+        <tr class="sc-drill" data-sc="zaki.s@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (4) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH51950</td><td class="detail-cell">Jul 8, 2026</td><td class="detail-cell"><b>13</b> days</td></tr><tr><td class="detail-cell">LMH160032</td><td class="detail-cell">Jul 9, 2026</td><td class="detail-cell"><b>12</b> days</td></tr><tr><td class="detail-cell">LMH36147</td><td class="detail-cell">Jul 10, 2026</td><td class="detail-cell"><b>11</b> days</td></tr><tr><td class="detail-cell">RMH52867</td><td class="detail-cell">Jul 10, 2026</td><td class="detail-cell"><b>11</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="arshad.sayyed@solarsquare.in">
+          <td class="left">arshad.sayyed <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.15</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>4</b></td>
+          <td>3</td>
+          <td>13</td>
+          <td>2</td>
+          <td>7.2</td>
+          <td>2</td>
+          <td>2</td>
+        </tr>
+        <tr class="sc-drill" data-sc="arshad.sayyed@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (4) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH52181</td><td class="detail-cell">Jul 8, 2026</td><td class="detail-cell"><b>13</b> days</td></tr><tr><td class="detail-cell">LMH210864</td><td class="detail-cell">Jul 10, 2026</td><td class="detail-cell"><b>11</b> days</td></tr><tr><td class="detail-cell">LMH215529</td><td class="detail-cell">Jul 18, 2026</td><td class="detail-cell"><b>3</b> days</td></tr><tr><td class="detail-cell">LMH218201</td><td class="detail-cell">Jul 19, 2026</td><td class="detail-cell"><b>2</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="yash.kakde@solarsquare.in">
+          <td class="left">yash.kakde <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.76</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+          <td><b>4</b></td>
+          <td>10</td>
+          <td>13</td>
+          <td>1</td>
+          <td>7.5</td>
+          <td>2</td>
+          <td>2</td>
+        </tr>
+        <tr class="sc-drill" data-sc="yash.kakde@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (4) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH52739</td><td class="detail-cell">Jul 8, 2026</td><td class="detail-cell"><b>13</b> days</td></tr><tr><td class="detail-cell">RMH52741</td><td class="detail-cell">Jul 8, 2026</td><td class="detail-cell"><b>13</b> days</td></tr><tr><td class="detail-cell">LMH213535</td><td class="detail-cell">Jul 18, 2026</td><td class="detail-cell"><b>3</b> days</td></tr><tr><td class="detail-cell">LMH88634</td><td class="detail-cell">Jul 20, 2026</td><td class="detail-cell"><b>1</b> day</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row mid" data-sc="anil.tarte@solarsquare.in">
+          <td class="left">anil.tarte <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.52</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+          <td><b>3</b></td>
+          <td>3</td>
+          <td>5</td>
+          <td>3</td>
+          <td>4.3</td>
+          <td>2</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="anil.tarte@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (3) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH178497</td><td class="detail-cell">Jul 16, 2026</td><td class="detail-cell"><b>5</b> days</td></tr><tr><td class="detail-cell">RMH53392</td><td class="detail-cell">Jul 16, 2026</td><td class="detail-cell"><b>5</b> days</td></tr><tr><td class="detail-cell">RMH53673</td><td class="detail-cell">Jul 18, 2026</td><td class="detail-cell"><b>3</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="ankit.kamle@solarsquare.in">
+          <td class="left">ankit.kamle <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.90</b> <span style="color:var(--green); font-weight:600;">(A)</span></td>
+          <td><b>2</b></td>
+          <td>7</td>
+          <td>13</td>
+          <td>12</td>
+          <td>12.5</td>
+          <td>2</td>
+          <td>2</td>
+        </tr>
+        <tr class="sc-drill" data-sc="ankit.kamle@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (2) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH52735</td><td class="detail-cell">Jul 8, 2026</td><td class="detail-cell"><b>13</b> days</td></tr><tr><td class="detail-cell">LMH207294</td><td class="detail-cell">Jul 9, 2026</td><td class="detail-cell"><b>12</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="sameer.katare@solarsquare.in">
+          <td class="left">sameer.katare <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.22</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>2</b></td>
+          <td>1</td>
+          <td>16</td>
+          <td>3</td>
+          <td>9.5</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr class="sc-drill" data-sc="sameer.katare@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (2) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH52522</td><td class="detail-cell">Jul 5, 2026</td><td class="detail-cell"><b>16</b> days</td></tr><tr><td class="detail-cell">LMH216949</td><td class="detail-cell">Jul 18, 2026</td><td class="detail-cell"><b>3</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row " data-sc="tejas.yeole@solarsquare.in">
+          <td class="left">tejas.yeole <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>6.87</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>2</b></td>
+          <td>4</td>
+          <td>4</td>
+          <td>2</td>
+          <td>3.0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="tejas.yeole@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (2) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH211018</td><td class="detail-cell">Jul 17, 2026</td><td class="detail-cell"><b>4</b> days</td></tr><tr><td class="detail-cell">RMH49365</td><td class="detail-cell">Jul 19, 2026</td><td class="detail-cell"><b>2</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="yogesh.t@solarsquare.in">
+          <td class="left">yogesh.t <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>6.21</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>1</b></td>
+          <td>9</td>
+          <td>18</td>
+          <td>18</td>
+          <td>18.0</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr class="sc-drill" data-sc="yogesh.t@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (1) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH208586</td><td class="detail-cell">Jul 3, 2026</td><td class="detail-cell"><b>18</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row bad" data-sc="pravin.sarkate@solarsquare.in">
+          <td class="left">pravin.sarkate <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><span style="color:var(--muted);">NA</span></td>
+          <td><b>1</b></td>
+          <td>1</td>
+          <td>16</td>
+          <td>16</td>
+          <td>16.0</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr class="sc-drill" data-sc="pravin.sarkate@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (1) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH210082</td><td class="detail-cell">Jul 5, 2026</td><td class="detail-cell"><b>16</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row mid" data-sc="pratik.kamankar@solarsquare.in">
+          <td class="left">pratik.kamankar <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>5.78</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>1</b></td>
+          <td>6</td>
+          <td>10</td>
+          <td>10</td>
+          <td>10.0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="pratik.kamankar@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (1) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH200038</td><td class="detail-cell">Jul 11, 2026</td><td class="detail-cell"><b>10</b> days</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row " data-sc="piyush.agnihotri@solarsquare.in">
+          <td class="left">piyush.agnihotri <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><b>7.31</b> <span style="color:var(--amber); font-weight:600;">(B)</span></td>
+          <td><b>1</b></td>
+          <td>7</td>
+          <td>3</td>
+          <td>3</td>
+          <td>3.0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="piyush.agnihotri@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (1) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH52919</td><td class="detail-cell">Jul 18, 2026</td><td class="detail-cell"><b>3</b> days</td></tr></tbody>
+          </table>
+        </td></tr></tbody>
+    </table>
+    <div style="margin-top:6px; font-size:10.5px; color:var(--muted); line-height:1.5;">
+      FS orders placed in the current month (Jul 1-9) that have not yet reached HOTO. Rows highlighted red = at least one order aged &gt; 10 days; amber = at least one aged &gt; 4 days. Sorted by (&gt; 10-day count, then oldest, then total pending) descending. Click a row to see order-level detail: Lead ID · Order date · Days pending.
+    </div>
+
+<div class="section-title">10 · Cancellation + on-hold by SC · June orders</div>
+<table class="sc">
+      <thead><tr>
+        <th class="left">SC (email prefix)</th>
+        <th>Total FS orders (Jun)</th>
+        <th>Cancelled</th><th>Cancel %</th>
+        <th>On-hold</th><th>Hold %</th>
+        <th>Cancel + Hold</th>
+      </tr></thead>
+      <tbody><tr class="bad">
+          <td class="left">sahil.sable</td>
+          <td>4</td>
+          <td>0</td><td>0.0%</td>
+          <td>1</td><td>25.0%</td>
+          <td><b>1</b></td>
+        </tr><tr class="">
+          <td class="left">pratik.kamankar</td>
+          <td>7</td>
+          <td>1</td><td>14.3%</td>
+          <td>0</td><td>0.0%</td>
+          <td><b>1</b></td>
+        </tr><tr class="">
+          <td class="left">yogesh.t</td>
+          <td>10</td>
+          <td>0</td><td>0.0%</td>
+          <td>1</td><td>10.0%</td>
+          <td><b>1</b></td>
+        </tr><tr class="">
+          <td class="left">tejas.yeole</td>
+          <td>7</td>
+          <td>0</td><td>0.0%</td>
+          <td>1</td><td>14.3%</td>
+          <td><b>1</b></td>
+        </tr><tr class="">
+          <td class="left">yash.kakde</td>
+          <td>14</td>
+          <td>1</td><td>7.1%</td>
+          <td>0</td><td>0.0%</td>
+          <td><b>1</b></td>
+        </tr><tr class="">
+          <td class="left">piyush.agnihotri</td>
+          <td>7</td>
+          <td>0</td><td>0.0%</td>
+          <td>1</td><td>14.3%</td>
+          <td><b>1</b></td>
+        </tr><tr class="total-row">
+      <td class="left"><b>Total (6 SCs)</b></td>
+      <td>49</td>
+      <td>2</td><td>4.1%</td>
+      <td>4</td><td>8.2%</td>
+      <td><b>6</b></td>
+    </tr></tbody>
+    </table>
+    <div style="margin-top:6px; font-size:10.5px; color:var(--muted); line-height:1.5;">
+      Rows with combined cancel+hold share &gt; 20% of SC's June orders highlighted red. Only SCs with at least one cancellation or on-hold order shown. Sorted by combined descending.
+    </div>
+
+
+<div class="section-title">11 · SC Index score × lead-score bucket · MD &amp; Order matrix <span class="expand-hint">adjust date range to slice; sorted by SC Index score · click an SC row for its not-converted leads</span></div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  <b>Cohort view</b> — MDs done in the selected date range (strict FS only, matching Sections 8 &amp; 9) for each SC with an SC Index score in Nashik, split by lead-score bucket; <b>Orders</b> = orders converted from those same meetings (attributed to the MD's date, so the cohort stays intact even if the order landed later). <b>MD share</b> = MDs in bucket ÷ total MDs done by the SC (denominator includes unscored leads). <b>Conv %</b> = cohort conversion, colored vs target: lead 9–10 → <b>70%</b>, lead 7–9 → <b>50%</b> (<span style="color:var(--green); font-weight:700;">green ≥ target</span> / <span style="color:var(--red); font-weight:700;">red &lt; target</span>; other buckets uncolored). Default range: MTD (Jul 1 → today).
+</div>
+<div style="display:flex; gap:12px; align-items:center; margin:6px 0 8px;">
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">From
+    <input type="date" id="sclb-from" min="2026-07-01" max="2026-07-31" value="2026-07-01" style="margin-left:5px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+  </label>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">To
+    <input type="date" id="sclb-to" min="2026-07-01" max="2026-07-31" value="2026-07-21" style="margin-left:5px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+  </label>
+  <span style="font-size:10.5px; color:var(--muted); margin-left:auto;"><b id="sclb-sc-count">–</b> SCs indexed in range</span>
+</div>
+<div id="sclb-redsummary" style="display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:0 0 10px;"></div>
+<div style="overflow-x:auto;">
+<table class="sc sc-bkt-matrix" id="sclb-table">
+  <thead>
+    <tr>
+      <th class="left" rowspan="2">SC (email)</th>
+      <th rowspan="2" class="col-divider">SC score</th>
+      <th colspan="4" class="bkt-group col-divider" style="background:rgba(30,138,76,0.10);">Lead score 9–10</th>
+      <th colspan="4" class="bkt-group col-divider" style="background:rgba(30,138,76,0.06);">Lead score 7–9</th>
+      <th colspan="4" class="bkt-group col-divider" style="background:rgba(185,116,0,0.07);">Lead score 5–7</th>
+      <th colspan="4" class="bkt-group col-divider" style="background:rgba(180,58,42,0.06);">Lead score 2–5</th>
+      <th colspan="4" class="bkt-group col-divider" style="background:rgba(180,58,42,0.10);">Lead score 0–2</th>
+      <th colspan="3" class="bkt-group col-divider" style="background:#ECE9E4;">Total · all buckets</th>
+    </tr>
+    <tr>
+      <th class="col-divider">MDs</th><th>Share</th><th>Ord</th><th>Conv %</th>
+      <th class="col-divider">MDs</th><th>Share</th><th>Ord</th><th>Conv %</th>
+      <th class="col-divider">MDs</th><th>Share</th><th>Ord</th><th>Conv %</th>
+      <th class="col-divider">MDs</th><th>Share</th><th>Ord</th><th>Conv %</th>
+      <th class="col-divider">MDs</th><th>Share</th><th>Ord</th><th>Conv %</th>
+      <th class="col-divider">MDs</th><th>Ord</th><th>Conv %</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+</div>
+<style>
+  table.sc-bkt-matrix th.col-divider,
+  table.sc-bkt-matrix td.col-divider { border-left: 2px solid var(--ink-2); }
+  table.sc-bkt-matrix th.bkt-group { text-align:center; font-weight:700; padding:6px 4px; }
+</style>
+<script>
+(function() {
+  const EVENTS = [[4,"anil.tarte@solarsquare.in",3,0,"LMH109396"],[7,"ankit.kamle@solarsquare.in",2,1,"LMH111208"],[18,"yash.kakde@solarsquare.in",3,0,"LMH113696"],[9,"piyush.agnihotri@solarsquare.in",0,0,"LMH116209"],[11,"anil.tarte@solarsquare.in",3,0,"LMH119376"],[21,"anil.tarte@solarsquare.in",3,1,"LMH127628"],[18,"pratik.kamankar@solarsquare.in",2,0,"LMH12811"],[3,"arshad.sayyed@solarsquare.in",3,1,"LMH131382"],[12,"zaki.s@solarsquare.in",3,1,"LMH140159"],[3,"ankit.kamle@solarsquare.in",0,0,"LMH14047"],[3,"anil.tarte@solarsquare.in",1,0,"LMH155788"],[7,"pratik.kamankar@solarsquare.in",2,1,"LMH173234"],[21,"anil.tarte@solarsquare.in",2,0,"LMH174751"],[14,"piyush.agnihotri@solarsquare.in",2,0,"LMH182416"],[9,"zaki.s@solarsquare.in",2,0,"LMH183538"],[12,"arshad.sayyed@solarsquare.in",2,0,"LMH188075"],[19,"piyush.agnihotri@solarsquare.in",2,0,"LMH189906"],[7,"sameer.katare@solarsquare.in",1,0,"LMH190830"],[15,"yogesh.t@solarsquare.in",0,0,"LMH193279"],[15,"darshan.wagh@solarsquare.in",2,0,"LMH193647"],[9,"yogesh.t@solarsquare.in",2,1,"LMH193655"],[11,"tejas.yeole@solarsquare.in",1,0,"LMH193669"],[19,"arshad.sayyed@solarsquare.in",2,0,"LMH193828"],[16,"arshad.sayyed@solarsquare.in",0,0,"LMH194348"],[2,"yogesh.t@solarsquare.in",0,0,"LMH197746"],[12,"tejas.yeole@solarsquare.in",3,0,"LMH198203"],[18,"piyush.agnihotri@solarsquare.in",3,0,"LMH198289"],[12,"zaki.s@solarsquare.in",3,0,"LMH198422"],[4,"divyanshu.mali@solarsquare.in",2,0,"LMH198510"],[11,"piyush.agnihotri@solarsquare.in",4,0,"LMH199753"],[9,"pratik.kamankar@solarsquare.in",2,1,"LMH200038"],[10,"pratik.kamankar@solarsquare.in",3,0,"LMH200637"],[2,"piyush.agnihotri@solarsquare.in",2,0,"LMH200666"],[10,"yash.kakde@solarsquare.in",2,0,"LMH200864"],[5,"pratik.kamankar@solarsquare.in",0,0,"LMH201020"],[3,"arshad.sayyed@solarsquare.in",2,0,"LMH201433"],[9,"yogesh.t@solarsquare.in",1,0,"LMH201590"],[3,"darshan.wagh@solarsquare.in",3,0,"LMH201630"],[16,"tejas.yeole@solarsquare.in",4,0,"LMH202384"],[8,"sameer.katare@solarsquare.in",3,0,"LMH203006"],[2,"yogesh.t@solarsquare.in",3,0,"LMH203132"],[12,"arshad.sayyed@solarsquare.in",0,0,"LMH204412"],[4,"tejas.yeole@solarsquare.in",2,1,"LMH204452"],[3,"darshan.wagh@solarsquare.in",3,0,"LMH205433"],[2,"yash.kakde@solarsquare.in",1,1,"LMH205499"],[3,"divyanshu.mali@solarsquare.in",1,0,"LMH205891"],[2,"darshan.wagh@solarsquare.in",1,0,"LMH205897"],[7,"tejas.yeole@solarsquare.in",2,0,"LMH206040"],[16,"piyush.agnihotri@solarsquare.in",1,1,"LMH206163"],[11,"yash.kakde@solarsquare.in",0,0,"LMH206522"],[17,"anil.tarte@solarsquare.in",3,0,"LMH206561"],[17,"zaki.s@solarsquare.in",2,0,"LMH206690"],[3,"pratik.kamankar@solarsquare.in",3,0,"LMH206729"],[2,"arshad.sayyed@solarsquare.in",2,0,"LMH206807"],[2,"ankit.kamle@solarsquare.in",1,0,"LMH206825"],[18,"pratik.kamankar@solarsquare.in",0,0,"LMH206934"],[19,"ankit.kamle@solarsquare.in",2,0,"LMH207036"],[4,"darshan.wagh@solarsquare.in",3,0,"LMH207170"],[9,"ankit.kamle@solarsquare.in",1,1,"LMH207294"],[5,"ankit.kamle@solarsquare.in",2,0,"LMH207368"],[15,"divyanshu.mali@solarsquare.in",3,0,"LMH207435"],[5,"zaki.s@solarsquare.in",3,0,"LMH207556"],[2,"zaki.s@solarsquare.in",2,0,"LMH207797"],[2,"piyush.agnihotri@solarsquare.in",0,0,"LMH207840"],[2,"divyanshu.mali@solarsquare.in",2,0,"LMH207969"],[3,"piyush.agnihotri@solarsquare.in",1,0,"LMH207982"],[18,"sameer.katare@solarsquare.in",0,0,"LMH208006"],[2,"piyush.agnihotri@solarsquare.in",0,0,"LMH208167"],[2,"ankit.kamle@solarsquare.in",1,0,"LMH208363"],[3,"anil.tarte@solarsquare.in",3,0,"LMH208382"],[14,"tejas.yeole@solarsquare.in",2,0,"LMH208407"],[14,"arshad.sayyed@solarsquare.in",2,0,"LMH208427"],[3,"zaki.s@solarsquare.in",2,0,"LMH208437"],[8,"piyush.agnihotri@solarsquare.in",3,0,"LMH208545"],[3,"pratik.kamankar@solarsquare.in",0,0,"LMH208560"],[3,"yogesh.t@solarsquare.in",2,1,"LMH208586"],[2,"divyanshu.mali@solarsquare.in",2,0,"LMH208589"],[5,"piyush.agnihotri@solarsquare.in",2,0,"LMH208612"],[21,"gaurav.j@solarsquare.in",4,1,"LMH208694"],[5,"divyanshu.mali@solarsquare.in",2,0,"LMH208776"],[5,"arshad.sayyed@solarsquare.in",1,0,"LMH208815"],[7,"anil.tarte@solarsquare.in",3,0,"LMH208953"],[5,"pratik.kamankar@solarsquare.in",3,0,"LMH208973"],[3,"divyanshu.mali@solarsquare.in",3,0,"LMH209005"],[5,"ankit.kamle@solarsquare.in",0,0,"LMH209147"],[3,"yogesh.t@solarsquare.in",0,0,"LMH209174"],[3,"zaki.s@solarsquare.in",2,0,"LMH209180"],[5,"darshan.wagh@solarsquare.in",2,0,"LMH209181"],[5,"yash.kakde@solarsquare.in",3,1,"LMH209243"],[4,"ankit.kamle@solarsquare.in",1,0,"LMH209362"],[4,"anil.tarte@solarsquare.in",3,0,"LMH209405"],[5,"divyanshu.mali@solarsquare.in",1,0,"LMH209449"],[7,"arshad.sayyed@solarsquare.in",1,0,"LMH209500"],[5,"zaki.s@solarsquare.in",2,0,"LMH209611"],[8,"pratik.kamankar@solarsquare.in",3,0,"LMH209636"],[5,"yogesh.t@solarsquare.in",4,0,"LMH209675"],[7,"divyanshu.mali@solarsquare.in",3,0,"LMH209694"],[5,"piyush.agnihotri@solarsquare.in",2,0,"LMH209717"],[9,"tejas.yeole@solarsquare.in",2,0,"LMH209781"],[9,"anil.tarte@solarsquare.in",2,0,"LMH209787"],[11,"tejas.yeole@solarsquare.in",1,0,"LMH209843"],[7,"zaki.s@solarsquare.in",0,1,"LMH209879"],[7,"piyush.agnihotri@solarsquare.in",2,0,"LMH209925"],[8,"sameer.katare@solarsquare.in",4,0,"LMH209927"],[7,"zaki.s@solarsquare.in",0,0,"LMH210058"],[5,"yogesh.t@solarsquare.in",3,0,"LMH210090"],[7,"pratik.kamankar@solarsquare.in",1,0,"LMH210108"],[11,"yogesh.t@solarsquare.in",0,0,"LMH210213"],[14,"pratik.kamankar@solarsquare.in",1,0,"LMH210223"],[7,"sameer.katare@solarsquare.in",0,0,"LMH210259"],[16,"pratik.kamankar@solarsquare.in",1,1,"LMH210281"],[12,"anil.tarte@solarsquare.in",3,0,"LMH210314"],[5,"darshan.wagh@solarsquare.in",3,0,"LMH210315"],[18,"zaki.s@solarsquare.in",1,0,"LMH210336"],[7,"yash.kakde@solarsquare.in",2,0,"LMH210348"],[5,"anil.tarte@solarsquare.in",3,0,"LMH210370"],[5,"tejas.yeole@solarsquare.in",4,0,"LMH210420"],[5,"anil.tarte@solarsquare.in",3,1,"LMH210427"],[7,"anil.tarte@solarsquare.in",3,1,"LMH210513"],[7,"yash.kakde@solarsquare.in",3,0,"LMH210546"],[7,"divyanshu.mali@solarsquare.in",2,0,"LMH210640"],[12,"sameer.katare@solarsquare.in",2,0,"LMH210693"],[7,"arshad.sayyed@solarsquare.in",3,0,"LMH210810"],[7,"darshan.wagh@solarsquare.in",3,0,"LMH210816"],[10,"arshad.sayyed@solarsquare.in",0,1,"LMH210864"],[11,"arshad.sayyed@solarsquare.in",0,0,"LMH210877"],[14,"tejas.yeole@solarsquare.in",2,0,"LMH210887"],[10,"sameer.katare@solarsquare.in",3,0,"LMH210927"],[9,"yogesh.t@solarsquare.in",2,0,"LMH210931"],[8,"darshan.wagh@solarsquare.in",2,0,"LMH210938"],[17,"tejas.yeole@solarsquare.in",1,1,"LMH211018"],[10,"tejas.yeole@solarsquare.in",2,0,"LMH211019"],[12,"zaki.s@solarsquare.in",2,0,"LMH211047"],[8,"anil.tarte@solarsquare.in",2,0,"LMH211120"],[11,"ankit.kamle@solarsquare.in",1,0,"LMH211280"],[8,"yogesh.t@solarsquare.in",2,0,"LMH211302"],[8,"zaki.s@solarsquare.in",1,0,"LMH211314"],[21,"yogesh.t@solarsquare.in",1,0,"LMH211328"],[15,"piyush.agnihotri@solarsquare.in",2,0,"LMH211377"],[8,"yogesh.t@solarsquare.in",3,0,"LMH211511"],[9,"pratik.kamankar@solarsquare.in",1,0,"LMH211590"],[8,"piyush.agnihotri@solarsquare.in",2,1,"LMH211668"],[9,"tejas.yeole@solarsquare.in",3,1,"LMH211674"],[9,"yash.kakde@solarsquare.in",2,0,"LMH211711"],[12,"yogesh.t@solarsquare.in",1,0,"LMH211788"],[9,"anil.tarte@solarsquare.in",2,0,"LMH211994"],[9,"sameer.katare@solarsquare.in",3,0,"LMH212006"],[11,"sameer.katare@solarsquare.in",1,0,"LMH212067"],[16,"tejas.yeole@solarsquare.in",2,0,"LMH212114"],[10,"tejas.yeole@solarsquare.in",1,0,"LMH212124"],[11,"pratik.kamankar@solarsquare.in",3,0,"LMH212282"],[10,"zaki.s@solarsquare.in",0,0,"LMH212291"],[14,"yash.kakde@solarsquare.in",1,1,"LMH212445"],[9,"arshad.sayyed@solarsquare.in",3,0,"LMH212504"],[10,"anil.tarte@solarsquare.in",3,0,"LMH212546"],[17,"pratik.kamankar@solarsquare.in",1,0,"LMH212556"],[10,"zaki.s@solarsquare.in",1,0,"LMH212610"],[12,"divyanshu.mali@solarsquare.in",1,0,"LMH212697"],[12,"anil.tarte@solarsquare.in",2,0,"LMH212761"],[10,"sameer.katare@solarsquare.in",2,0,"LMH212953"],[10,"yogesh.t@solarsquare.in",1,0,"LMH212955"],[16,"zaki.s@solarsquare.in",1,0,"LMH213117"],[12,"tejas.yeole@solarsquare.in",0,0,"LMH213410"],[12,"pratik.kamankar@solarsquare.in",3,0,"LMH213485"],[11,"anil.tarte@solarsquare.in",1,0,"LMH213513"],[18,"yash.kakde@solarsquare.in",0,1,"LMH213535"],[11,"ankit.kamle@solarsquare.in",3,1,"LMH213605"],[14,"arshad.sayyed@solarsquare.in",3,0,"LMH213670"],[15,"arshad.sayyed@solarsquare.in",2,0,"LMH213681"],[14,"tejas.yeole@solarsquare.in",1,0,"LMH213789"],[12,"yash.kakde@solarsquare.in",1,0,"LMH213899"],[11,"pratik.kamankar@solarsquare.in",1,0,"LMH213920"],[14,"divyanshu.mali@solarsquare.in",0,0,"LMH213975"],[12,"yogesh.t@solarsquare.in",1,0,"LMH213978"],[14,"piyush.agnihotri@solarsquare.in",2,0,"LMH214019"],[12,"divyanshu.mali@solarsquare.in",0,0,"LMH214075"],[14,"ankit.kamle@solarsquare.in",2,0,"LMH214094"],[13,"sameer.katare@solarsquare.in",0,0,"LMH214107"],[17,"yogesh.t@solarsquare.in",1,0,"LMH214133"],[12,"yash.kakde@solarsquare.in",3,0,"LMH214151"],[14,"pratik.kamankar@solarsquare.in",3,0,"LMH214155"],[12,"ankit.kamle@solarsquare.in",0,0,"LMH214304"],[21,"sameer.katare@solarsquare.in",2,0,"LMH214311"],[12,"anil.tarte@solarsquare.in",3,1,"LMH214315"],[14,"divyanshu.mali@solarsquare.in",2,0,"LMH214357"],[15,"pratik.kamankar@solarsquare.in",0,0,"LMH214446"],[21,"arshad.sayyed@solarsquare.in",4,0,"LMH214499"],[17,"arshad.sayyed@solarsquare.in",1,0,"LMH214539"],[14,"yash.kakde@solarsquare.in",3,0,"LMH214569"],[13,"zaki.s@solarsquare.in",3,0,"LMH214577"],[16,"pratik.kamankar@solarsquare.in",2,0,"LMH214593"],[14,"piyush.agnihotri@solarsquare.in",0,0,"LMH214645"],[16,"yash.kakde@solarsquare.in",3,0,"LMH214647"],[14,"zaki.s@solarsquare.in",0,0,"LMH214691"],[15,"yash.kakde@solarsquare.in",1,0,"LMH214697"],[19,"anil.tarte@solarsquare.in",3,0,"LMH214726"],[16,"piyush.agnihotri@solarsquare.in",1,0,"LMH214751"],[18,"ankit.kamle@solarsquare.in",0,0,"LMH214975"],[21,"tejas.yeole@solarsquare.in",3,0,"LMH215022"],[19,"sameer.katare@solarsquare.in",2,0,"LMH215027"],[16,"ankit.kamle@solarsquare.in",3,1,"LMH215136"],[15,"pratik.kamankar@solarsquare.in",4,0,"LMH215156"],[18,"tejas.yeole@solarsquare.in",1,0,"LMH215442"],[18,"arshad.sayyed@solarsquare.in",3,1,"LMH215529"],[15,"piyush.agnihotri@solarsquare.in",4,1,"LMH215542"],[16,"zaki.s@solarsquare.in",1,0,"LMH215546"],[15,"zaki.s@solarsquare.in",2,0,"LMH215592"],[17,"piyush.agnihotri@solarsquare.in",2,0,"LMH215598"],[15,"pratik.kamankar@solarsquare.in",3,1,"LMH215661"],[15,"yogesh.t@solarsquare.in",3,1,"LMH215765"],[19,"tejas.yeole@solarsquare.in",2,0,"LMH215824"],[18,"anil.tarte@solarsquare.in",4,0,"LMH216021"],[19,"zaki.s@solarsquare.in",3,0,"LMH216183"],[19,"zaki.s@solarsquare.in",3,0,"LMH216309"],[16,"anil.tarte@solarsquare.in",3,0,"LMH216368"],[17,"ankit.kamle@solarsquare.in",2,0,"LMH216398"],[19,"ankit.kamle@solarsquare.in",1,0,"LMH216416"],[21,"divyanshu.mali@solarsquare.in",2,0,"LMH216440"],[19,"pratik.kamankar@solarsquare.in",2,0,"LMH216469"],[21,"yash.kakde@solarsquare.in",3,1,"LMH216868"],[17,"ankit.kamle@solarsquare.in",3,0,"LMH216884"],[16,"yogesh.t@solarsquare.in",3,0,"LMH216888"],[21,"piyush.agnihotri@solarsquare.in",0,1,"LMH216914"],[18,"sameer.katare@solarsquare.in",0,1,"LMH216949"],[19,"yogesh.t@solarsquare.in",2,0,"LMH217045"],[18,"yogesh.t@solarsquare.in",3,0,"LMH217093"],[19,"pratik.kamankar@solarsquare.in",1,0,"LMH217141"],[18,"tejas.yeole@solarsquare.in",1,0,"LMH217678"],[18,"piyush.agnihotri@solarsquare.in",3,0,"LMH217764"],[18,"zaki.s@solarsquare.in",3,0,"LMH217817"],[21,"arshad.sayyed@solarsquare.in",4,0,"LMH217922"],[19,"sameer.katare@solarsquare.in",2,0,"LMH218133"],[21,"yogesh.t@solarsquare.in",3,0,"LMH218163"],[18,"arshad.sayyed@solarsquare.in",3,1,"LMH218201"],[19,"anil.tarte@solarsquare.in",1,0,"LMH218286"],[19,"yogesh.t@solarsquare.in",0,0,"LMH218289"],[21,"ankit.kamle@solarsquare.in",0,0,"LMH218310"],[21,"pratik.kamankar@solarsquare.in",0,0,"LMH218329"],[21,"yash.kakde@solarsquare.in",3,0,"LMH218331"],[21,"gaurav.j@solarsquare.in",1,0,"LMH218541"],[21,"sameer.katare@solarsquare.in",3,0,"LMH218634"],[21,"anil.tarte@solarsquare.in",2,0,"LMH218945"],[21,"tejas.yeole@solarsquare.in",0,0,"LMH218993"],[21,"zaki.s@solarsquare.in",3,1,"LMH219389"],[21,"yogesh.t@solarsquare.in",0,0,"LMH219812"],[2,"zaki.s@solarsquare.in",3,0,"LMH27788"],[15,"ankit.kamle@solarsquare.in",1,0,"LMH27956"],[19,"piyush.agnihotri@solarsquare.in",2,0,"LMH36020"],[12,"arshad.sayyed@solarsquare.in",0,0,"LMH45223"],[5,"yogesh.t@solarsquare.in",0,1,"LMH49627"],[4,"pratik.kamankar@solarsquare.in",2,0,"LMH63733"],[5,"ankit.kamle@solarsquare.in",2,1,"LMH67127"],[19,"yash.kakde@solarsquare.in",0,1,"LMH88634"],[10,"anil.tarte@solarsquare.in",3,0,"LMH9553"],[12,"tejas.yeole@solarsquare.in",0,0,"LUP118312"],[19,"tejas.yeole@solarsquare.in",3,1,"RMH12241"],[7,"divyanshu.mali@solarsquare.in",4,0,"RMH25016"],[3,"zaki.s@solarsquare.in",2,0,"RMH49257"],[11,"yash.kakde@solarsquare.in",2,0,"RMH51974"],[18,"yogesh.t@solarsquare.in",2,1,"RMH52015"],[2,"arshad.sayyed@solarsquare.in",3,1,"RMH52181"],[5,"zaki.s@solarsquare.in",1,0,"RMH52208"],[10,"yash.kakde@solarsquare.in",0,1,"RMH52260"],[3,"darshan.wagh@solarsquare.in",2,1,"RMH52304"],[2,"pratik.kamankar@solarsquare.in",4,1,"RMH52305"],[5,"darshan.wagh@solarsquare.in",3,0,"RMH52311"],[4,"yogesh.t@solarsquare.in",3,0,"RMH52403"],[4,"yash.kakde@solarsquare.in",3,0,"RMH52406"],[5,"arshad.sayyed@solarsquare.in",2,0,"RMH52430"],[4,"piyush.agnihotri@solarsquare.in",4,1,"RMH52474"],[4,"yogesh.t@solarsquare.in",4,1,"RMH52476"],[5,"sameer.katare@solarsquare.in",4,1,"RMH52522"],[9,"zaki.s@solarsquare.in",3,0,"RMH52560"],[7,"yash.kakde@solarsquare.in",4,1,"RMH52662"],[8,"tejas.yeole@solarsquare.in",3,0,"RMH52714"],[8,"darshan.wagh@solarsquare.in",0,1,"RMH52715"],[8,"ankit.kamle@solarsquare.in",4,1,"RMH52735"],[8,"yash.kakde@solarsquare.in",4,1,"RMH52739"],[8,"yash.kakde@solarsquare.in",4,1,"RMH52741"],[9,"sameer.katare@solarsquare.in",3,0,"RMH52768"],[10,"ankit.kamle@solarsquare.in",4,1,"RMH52833"],[10,"yogesh.t@solarsquare.in",3,0,"RMH52838"],[10,"zaki.s@solarsquare.in",4,1,"RMH52867"],[10,"sameer.katare@solarsquare.in",4,1,"RMH52890"],[10,"piyush.agnihotri@solarsquare.in",4,1,"RMH52919"],[12,"pratik.kamankar@solarsquare.in",1,0,"RMH52937"],[11,"ankit.kamle@solarsquare.in",4,1,"RMH52954"],[11,"zaki.s@solarsquare.in",0,0,"RMH52988"],[15,"zaki.s@solarsquare.in",1,0,"RMH53012"],[12,"piyush.agnihotri@solarsquare.in",4,1,"RMH53080"],[12,"yash.kakde@solarsquare.in",4,1,"RMH53099"],[12,"piyush.agnihotri@solarsquare.in",4,0,"RMH53101"],[15,"divyanshu.mali@solarsquare.in",3,1,"RMH53126"],[21,"gaurav.j@solarsquare.in",3,0,"RMH53179"],[14,"yogesh.t@solarsquare.in",4,1,"RMH53242"],[16,"tejas.yeole@solarsquare.in",0,0,"RMH53281"],[17,"darshan.wagh@solarsquare.in",2,0,"RMH53302"],[15,"darshan.wagh@solarsquare.in",0,1,"RMH53335"],[18,"darshan.wagh@solarsquare.in",0,0,"RMH53382"],[15,"darshan.wagh@solarsquare.in",0,1,"RMH53385"],[16,"anil.tarte@solarsquare.in",3,1,"RMH53392"],[16,"darshan.wagh@solarsquare.in",0,0,"RMH53424"],[16,"darshan.wagh@solarsquare.in",2,0,"RMH53434"],[16,"ankit.kamle@solarsquare.in",4,0,"RMH53453"],[16,"zaki.s@solarsquare.in",4,1,"RMH53462"],[16,"yogesh.t@solarsquare.in",4,1,"RMH53484"],[16,"ankit.kamle@solarsquare.in",4,1,"RMH53486"],[17,"yash.kakde@solarsquare.in",3,1,"RMH53495"],[17,"tejas.yeole@solarsquare.in",4,0,"RMH53503"],[17,"arshad.sayyed@solarsquare.in",4,1,"RMH53530"],[19,"arshad.sayyed@solarsquare.in",3,1,"RMH53561"],[18,"yogesh.t@solarsquare.in",4,1,"RMH53606"],[18,"anil.tarte@solarsquare.in",4,1,"RMH53673"],[19,"darshan.wagh@solarsquare.in",3,1,"RMH53767"],[19,"darshan.wagh@solarsquare.in",4,1,"RMH53791"],[21,"pratik.kamankar@solarsquare.in",3,0,"RMH53799"],[21,"tejas.yeole@solarsquare.in",4,1,"RMH53856"]];   // cohort records: [md_day, sc_email, lb_idx, has_order]
+  const SCORES = {"sameer.katare@solarsquare.in":7.22,"gaurav.j@solarsquare.in":2.94,"ankit.kamle@solarsquare.in":7.9,"darshan.wagh@solarsquare.in":9.23,"zaki.s@solarsquare.in":6.7,"divyanshu.mali@solarsquare.in":5.55,"anil.tarte@solarsquare.in":7.52,"yogesh.t@solarsquare.in":6.21,"piyush.agnihotri@solarsquare.in":7.31,"pratik.kamankar@solarsquare.in":5.78,"yash.kakde@solarsquare.in":7.76,"tejas.yeole@solarsquare.in":6.87,"arshad.sayyed@solarsquare.in":7.15};
+  const BUCKET_ORDER_IDX = [4, 3, 2, 1, 0];   // display: 9-10, 7-9, 5-7, 2-5, 0-2
+  const CONV_TARGET = {4: 0.70, 3: 0.50};   // lb_idx → cohort conversion target
+  const BUCKET_LABEL = {4: '9–10', 3: '7–9'};
+  const fromInp = document.getElementById('sclb-from');
+  const toInp   = document.getElementById('sclb-to');
+  const tbody   = document.querySelector('#sclb-table tbody');
+  const scCountEl = document.getElementById('sclb-sc-count');
+  const redEl   = document.getElementById('sclb-redsummary');
+  function fmt(n) { return (n||0).toLocaleString(); }
+  function dayOf(iso) { return parseInt(iso.split('-')[2], 10); }
+  function shortEmail(e) {
+    const at = e.indexOf('@');
+    return at > 0 ? e.substring(0, at) : e;
+  }
+  function build() {
+    const fromDay = dayOf(fromInp.value);
+    const toDay   = dayOf(toInp.value);
+    if (fromDay > toDay) {
+      tbody.innerHTML = '<tr><td colspan="25" style="text-align:center; padding:12px; color:var(--muted); font-style:italic;">From date must be ≤ To date</td></tr>';
+      scCountEl.textContent = '0'; redEl.innerHTML = '';
+      return;
+    }
+    // Cohort aggregation: filter on MD day; order rides with the MD record.
+    // Also collect not-converted leads per SC for the click drill-down.
+    const bySc = new Map();
+    const notConv = new Map();   // sc → [[md_day, lb_idx, lead_id], ...]
+    for (const [d, sc, lb, hasOrd, leadId] of EVENTS) {
+      if (d < fromDay || d > toDay) continue;
+      if (!(sc in SCORES)) continue;
+      if (!bySc.has(sc)) { bySc.set(sc, {md: [0,0,0,0,0,0], ord: [0,0,0,0,0,0]}); notConv.set(sc, []); }
+      const row = bySc.get(sc);
+      row.md[lb]++;
+      if (hasOrd) row.ord[lb]++;
+      else notConv.get(sc).push([d, lb, leadId]);
+    }
+    const rows = [];
+    for (const [sc, agg] of bySc.entries()) {
+      const mdTot = agg.md.reduce((a,b)=>a+b, 0);
+      if (mdTot === 0) continue;
+      rows.push({sc, score: SCORES[sc], mdTot, agg});
+    }
+    rows.sort((a, b) => b.score - a.score);
+    scCountEl.textContent = rows.length;
+    // ---- Red-SC summary for 9–10 (70%) and 7–9 (50%) buckets ----
+    redEl.innerHTML = [4, 3].map(bi => {
+      const target = CONV_TARGET[bi];
+      let n = 0, mdS = 0, ordS = 0;
+      rows.forEach(r => {
+        const md = r.agg.md[bi], od = r.agg.ord[bi];
+        if (md > 0 && od / md < target) { n++; mdS += md; ordS += od; }
+      });
+      const pot = Math.round(mdS * target);
+      const delta = pot - ordS;
+      return `<div style="padding:8px 11px; background:rgba(180,58,42,0.05); border-left:3px solid var(--red); border-radius:0 4px 4px 0;">
+        <div style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:0.06em; color:var(--muted); margin-bottom:3px;">Lead ${BUCKET_LABEL[bi]} · SCs below ${Math.round(target*100)}% cohort conversion</div>
+        <div style="font-size:11px; color:var(--ink); font-variant-numeric:tabular-nums;">
+          SCs in red: <b>${n}</b> &nbsp;·&nbsp; MDs by them: <b>${fmt(mdS)}</b> &nbsp;·&nbsp; Orders: <b>${fmt(ordS)}</b> &nbsp;·&nbsp; Orders @ ${Math.round(target*100)}%: <b>${fmt(pot)}</b> &nbsp;·&nbsp; Delta: <b style="color:var(--red);">+${fmt(delta)}</b>
+        </div>
+      </div>`;
+    }).join('');
+    if (rows.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="25" style="text-align:center; padding:12px; color:var(--muted); font-style:italic;">No indexed SC activity in this date range</td></tr>';
+      return;
+    }
+    const scoreColor = s => s > 7 ? 'var(--green)' : s >= 5 ? 'var(--amber)' : 'var(--red)';
+    // ---- SC rows (+ accumulate totals) ----
+    const totalMd = [0,0,0,0,0,0], totalOrd = [0,0,0,0,0,0];
+    let grandMdTot = 0;
+    let html = rows.map(r => {
+      grandMdTot += r.mdTot;
+      const cells = BUCKET_ORDER_IDX.map(bi => {
+        const md = r.agg.md[bi], od = r.agg.ord[bi];
+        totalMd[bi] += md; totalOrd[bi] += od;
+        const share = r.mdTot > 0 ? (md / r.mdTot * 100).toFixed(1) + '%' : '–';
+        let convHtml;
+        if (md > 0) {
+          const conv = od / md;
+          const t = CONV_TARGET[bi];
+          const cstyle = t !== undefined
+            ? (conv >= t ? 'color:var(--green); font-weight:700;' : 'color:var(--red); font-weight:700;')
+            : '';
+          convHtml = `<span style="${cstyle}">${(conv*100).toFixed(1)}%</span>`;
+        } else {
+          convHtml = '<span style="color:var(--muted);">–</span>';
+        }
+        return `<td class="col-divider">${fmt(md)}</td><td style="color:var(--muted);">${share}</td><td>${fmt(od)}</td><td>${convHtml}</td>`;
+      }).join('');
+      const ordTot = r.agg.ord.reduce((a,b)=>a+b, 0);
+      const totConvHtml = r.mdTot > 0 ? (ordTot / r.mdTot * 100).toFixed(1) + '%' : '<span style="color:var(--muted);">–</span>';
+      const totCellsSc = `<td class="col-divider" style="font-weight:700;">${fmt(r.mdTot)}</td><td style="font-weight:700;">${fmt(ordTot)}</td><td style="font-weight:700;">${totConvHtml}</td>`;
+      return `<tr data-sc="${r.sc}" style="cursor:pointer;"><td class="left" title="${r.sc} — click for not-converted leads">${shortEmail(r.sc)} <span style="color:var(--muted); font-size:9px;">▸</span></td><td class="col-divider" style="font-weight:700; color:${scoreColor(r.score)};">${r.score.toFixed(2)}</td>${cells}${totCellsSc}</tr>`;
+    }).join('');
+    // ---- Total row ----
+    const totCells = BUCKET_ORDER_IDX.map(bi => {
+      const md = totalMd[bi], od = totalOrd[bi];
+      const share = grandMdTot > 0 ? (md / grandMdTot * 100).toFixed(1) + '%' : '–';
+      let convHtml;
+      if (md > 0) {
+        const conv = od / md;
+        const t = CONV_TARGET[bi];
+        const cstyle = t !== undefined
+          ? (conv >= t ? 'color:var(--green); font-weight:700;' : 'color:var(--red); font-weight:700;')
+          : 'font-weight:700;';
+        convHtml = `<span style="${cstyle}">${(conv*100).toFixed(1)}%</span>`;
+      } else {
+        convHtml = '<span style="color:var(--muted);">–</span>';
+      }
+      return `<td class="col-divider" style="font-weight:700;">${fmt(md)}</td><td style="font-weight:700; color:var(--muted);">${share}</td><td style="font-weight:700;">${fmt(od)}</td><td>${convHtml}</td>`;
+    }).join('');
+    const grandOrdTot = totalOrd.reduce((a,b)=>a+b, 0);
+    const grandConvHtml = grandMdTot > 0 ? (grandOrdTot / grandMdTot * 100).toFixed(1) + '%' : '–';
+    html += `<tr style="background:#f3f4f6; border-top:2px solid #9ca3af;"><td class="left" style="font-weight:700;">Total (${rows.length} SCs)</td><td class="col-divider" style="color:var(--muted);">–</td>${totCells}<td class="col-divider" style="font-weight:700;">${fmt(grandMdTot)}</td><td style="font-weight:700;">${fmt(grandOrdTot)}</td><td style="font-weight:700;">${grandConvHtml}</td></tr>`;
+    tbody.innerHTML = html;
+
+    // ---- Drill-down: click an SC row → "Not converted leads" sub-table ----
+    const LB_NAME = ['0–2','2–5','5–7','7–9','9–10','unknown'];
+    tbody.querySelectorAll('tr[data-sc]').forEach(tr => {
+      tr.addEventListener('click', () => {
+        const next = tr.nextElementSibling;
+        if (next && next.classList.contains('sclb-detail')) { next.remove(); return; }
+        // Close any other open detail row
+        tbody.querySelectorAll('tr.sclb-detail').forEach(x => x.remove());
+        const sc = tr.getAttribute('data-sc');
+        const list = (notConv.get(sc) || []).slice()
+          .sort((a, b) => ((b[1]===5?-1:b[1]) - (a[1]===5?-1:a[1])) || (a[0] - b[0]));
+        const detail = document.createElement('tr');
+        detail.className = 'sclb-detail';
+        if (list.length === 0) {
+          detail.innerHTML = `<td colspan="25" style="background:#faf9f7; padding:8px 14px; font-size:10.5px; color:var(--green); font-weight:700;">All meetings converted in this range ✓</td>`;
+        } else {
+          const rowsHtml = list.map(([d, lb, lid]) => `<tr><td class="left">${lid || '<span style="color:var(--muted);">–</span>'}</td><td>Jul ${d}</td><td>${LB_NAME[lb]}</td></tr>`).join('');
+          detail.innerHTML = `<td colspan="25" style="background:#faf9f7; padding:8px 14px;">
+            <div style="font-size:10.5px; font-weight:700; color:var(--ink); margin-bottom:5px;">Not converted leads · ${shortEmail(sc)} · ${list.length}</div>
+            <table class="sc" style="max-width:560px;">
+              <thead><tr><th class="left">Lead ID</th><th>Meeting done date</th><th>Lead score bucket</th></tr></thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </td>`;
+        }
+        tr.after(detail);
+      });
+    });
+  }
+  fromInp.addEventListener('change', build);
+  toInp.addEventListener('change', build);
+  build();
+})();
+</script>
+
+
+
+<div class="section-title">12 · HOTO mismatch · welcome-call coverage &amp; mismatch (MTD)</div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  HOTOs done in MTD per SC. Welcome call counted when Wlc Call Date is populated. <b>First mismatch %</b> = mismatches ÷ welcome calls. <b>Final mismatch</b> = mismatches still not resolved; <b>Final %</b> = final ÷ welcome calls. Same logic as the PAN India HOTO mismatch section. Sorted by mismatch count.
+</div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">SC (email prefix)</th>
+    <th>HOTOs done</th>
+    <th>Wlc calls</th>
+    <th>Wlc %</th>
+    <th>First mismatch</th>
+    <th>First mis %</th>
+    <th>Resolved</th>
+    <th>Final mismatch</th>
+    <th>Final mis %</th>
+  </tr></thead>
+  <tbody><tr>
+          <td class="left">ankit.kamle</td>
+          <td>7</td>
+          <td>6</td>
+          <td>85.7%</td>
+          <td>1</td>
+          <td>16.7%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>16.7%</td>
+        </tr><tr>
+          <td class="left">piyush.agnihotri</td>
+          <td>7</td>
+          <td>6</td>
+          <td>85.7%</td>
+          <td>1</td>
+          <td>16.7%</td>
+          <td>1</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">darshan.wagh</td>
+          <td>7</td>
+          <td>7</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>14.3%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>14.3%</td>
+        </tr><tr>
+          <td class="left">sahil.sable</td>
+          <td>4</td>
+          <td>4</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>25.0%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>25.0%</td>
+        </tr><tr>
+          <td class="left">tejas.yeole</td>
+          <td>4</td>
+          <td>4</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>25.0%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>25.0%</td>
+        </tr><tr>
+          <td class="left">tejraj.kadam</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td><span style="color:var(--red); font-weight:700;">1</span></td>
+          <td>100.0%</td>
+        </tr><tr>
+          <td class="left">yash.kakde</td>
+          <td>10</td>
+          <td>10</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">yogesh.t</td>
+          <td>9</td>
+          <td>6</td>
+          <td>66.7%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">pratik.kamankar</td>
+          <td>6</td>
+          <td>4</td>
+          <td>66.7%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">zaki.s</td>
+          <td>5</td>
+          <td>5</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">anil.tarte</td>
+          <td>3</td>
+          <td>3</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">arshad.sayyed</td>
+          <td>3</td>
+          <td>2</td>
+          <td>66.7%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">divyanshu.mali</td>
+          <td>2</td>
+          <td>2</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">payal.rathod</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">hritik.agarwal</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">muzakkir.chougle</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">nilesh.borkar</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">pravin.sarkate</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">harshada.gurav</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr>
+          <td class="left">sameer.katare</td>
+          <td>1</td>
+          <td>1</td>
+          <td>100.0%</td>
+          <td>0</td>
+          <td>0.0%</td>
+          <td>0</td>
+          <td>0</td>
+          <td>0.0%</td>
+        </tr><tr style="background:#f3f4f6; border-top:2px solid #9ca3af; font-weight:700;">
+          <td class="left">Total (Nashik)</td>
+          <td>75</td>
+          <td>67</td>
+          <td>89.3%</td>
+          <td>6</td>
+          <td>9.0%</td>
+          <td>1</td>
+          <td><span style="color:var(--red); font-weight:700;">5</span></td>
+          <td>7.5%</td>
+        </tr></tbody>
+</table>
+
+<div class="footnote">
+  <b>Reading the SC table.</b> Rows grouped by MTD conversion into GOOD (top quartile), MID, and BAD (bottom quartile — coaching candidates). Trend arrow compares recent 5-day (Jul 1-9) conversion to MTD baseline; ↑ improving, ↓ worsening. <b>On-spot</b> = share of an SC's MTD orders where the MD and Order happened the same day, formatted as % (on-spot orders / total MTD orders). Click any SC row to expand and see MD → Order performance broken out both by channel (Digital / Referral / BTL / SolarPro) and by lead-score bucket (cohort view: MDs done in the current month and orders from those MDs, bucketed 0-2, 2-5, 5-7, 7-9, 9-10). Filter: min 14 MDs MTD.
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('table.sc tbody tr.sc-row').forEach(function(row){
+  row.addEventListener('click', function(){
+    var sc = row.dataset.sc;
+    var tbody = row.closest('tbody');
+    if (!tbody) return;
+    var drill = tbody.querySelector('tr.sc-drill[data-sc="' + sc + '"]');
+    if (drill) drill.classList.toggle('open');
+  });
+});
+</script>
+
+
+<script>
+(function() {
+  if (typeof Chart === 'undefined') return;   // offline fallback: charts skipped gracefully
+  const T = {"mtd":{"bql":[49,48,59,48,27,25,54,44,36,48,54,53,65,36,38,64,47,44,55,53,36],"ms":[0,30,30,18,26,0,22,30,24,23,35,46,1,34,26,26,28,24,33,2,34],"md":[0,23,25,16,28,0,21,18,19,19,18,30,2,19,20,24,14,22,25,0,28],"ord":[0,6,3,2,6,0,5,8,5,5,4,7,1,4,5,7,6,9,6,1,7],"hoto":[2,1,3,1,1,0,6,2,7,3,4,3,0,5,7,4,6,4,0,5,5]},"lmtd":{"bql":[98,64,53,80,53,64,60,62,50,124,58,59,84,52,62,110,74,66,79,72,83],"ms":[0,18,23,29,25,33,28,4,29,20,22,25,33,30,2,34,27,34,34,40,45],"md":[1,9,19,17,15,18,20,3,18,15,19,16,24,24,1,21,22,20,25,24,33],"ord":[0,1,5,6,5,3,5,2,7,7,5,7,6,6,2,6,7,7,6,6,12],"hoto":[0,2,1,4,3,3,4,5,4,2,6,3,8,3,5,7,6,4,7,2,10]},"tgt":{"bql":[53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0,53.0],"ms":[0.0,27.0,28.0,33.0,40.0,0.0,28.0,29.0,27.0,28.0,33.0,40.0,0.0,28.0,29.0,27.0,28.0,33.0,40.0,0.0,28.0],"md":[0.0,25.0,25.0,30.0,36.0,0.0,25.0,26.0,25.0,25.0,30.0,36.0,0.0,25.0,26.0,25.0,25.0,30.0,36.0,0.0,25.0],"ord":[2.0,6.0,6.0,7.0,8.0,2.0,6.0,6.0,6.0,6.0,8.0,10.0,3.0,7.0,7.0,7.0,7.0,8.0,10.0,3.0,7.0],"hoto":[1.4,4.199999999999999,4.199999999999999,4.8999999999999995,5.6,1.4,4.199999999999999,4.199999999999999,4.5,4.5,6.0,7.5,2.25,5.25,5.25,5.6000000000000005,5.6000000000000005,6.4,8.0,2.4000000000000004,5.6000000000000005]},"slice":{"bql":{"m":[[1,0,5,3,8],[1,0,1,3,12],[1,0,2,3,18],[1,0,3,3,2],[1,0,4,3,1],[1,4,5,3,3],[1,1,4,3,1],[1,2,5,3,1],[1,2,1,3,2],[1,2,2,3,1],[2,0,5,3,10],[2,0,1,3,14],[2,0,2,3,9],[2,0,3,3,6],[2,4,5,3,3],[2,1,2,3,1],[2,1,3,3,2],[2,1,4,3,3],[3,0,5,3,5],[3,0,1,3,20],[3,0,2,3,17],[3,0,3,3,9],[3,0,4,3,1],[3,4,5,3,4],[3,1,5,3,1],[3,1,3,3,1],[3,2,1,3,1],[4,0,5,3,4],[4,0,1,3,12],[4,0,2,3,11],[4,0,3,3,7],[4,0,4,3,2],[4,4,5,3,6],[4,1,3,3,2],[4,1,2,3,1],[4,1,4,3,2],[4,2,2,3,1],[5,0,5,3,3],[5,0,1,3,8],[5,0,2,3,8],[5,0,3,3,5],[5,0,4,3,1],[5,1,3,3,1],[5,1,4,3,1],[6,0,5,3,1],[6,0,1,3,7],[6,0,2,3,5],[6,0,3,3,3],[6,0,4,3,2],[6,4,5,3,6],[6,1,1,3,1],[7,0,5,3,11],[7,0,1,3,14],[7,0,2,3,18],[7,0,3,3,6],[7,0,4,3,1],[7,4,5,3,2],[7,1,4,3,1],[7,2,1,3,1],[8,0,5,3,6],[8,0,1,3,10],[8,0,2,3,15],[8,0,3,3,3],[8,4,5,3,2],[8,1,3,3,2],[8,1,4,3,4],[8,2,5,3,2],[9,0,5,3,5],[9,0,1,3,12],[9,0,2,3,8],[9,0,3,3,3],[9,4,5,3,4],[9,1,3,3,1],[9,1,4,3,1],[9,2,1,3,2],[10,0,5,3,4],[10,0,1,3,16],[10,0,2,3,16],[10,0,3,3,6],[10,1,4,3,4],[10,2,5,3,1],[10,2,1,3,1],[11,0,5,3,2],[11,0,1,3,21],[11,0,2,3,14],[11,0,3,3,8],[11,4,5,3,4],[11,1,5,3,2],[11,1,4,3,1],[11,2,5,3,1],[11,2,1,3,1],[12,0,5,3,5],[12,0,1,3,26],[12,0,2,3,10],[12,0,3,3,6],[12,0,4,3,1],[12,1,3,3,1],[12,1,4,3,3],[12,2,5,3,1],[13,0,5,3,3],[13,0,1,3,27],[13,0,2,3,12],[13,0,3,3,7],[13,0,4,3,1],[13,4,5,3,3],[13,1,5,3,2],[13,1,3,3,1],[13,2,5,3,1],[13,2,0,3,4],[13,2,1,3,4],[14,0,1,3,15],[14,0,2,3,13],[14,0,3,3,4],[14,0,4,3,1],[14,1,4,3,1],[14,2,5,3,1],[14,2,1,3,1],[15,0,5,3,3],[15,0,1,3,11],[15,0,2,3,9],[15,0,3,3,7],[15,0,4,3,1],[15,1,3,3,1],[15,1,4,3,1],[15,2,5,3,1],[15,2,0,3,1],[15,2,1,3,2],[15,2,2,3,1],[16,0,5,3,7],[16,0,1,3,20],[16,0,2,3,16],[16,0,3,3,10],[16,4,5,3,4],[16,1,3,3,1],[16,1,4,3,4],[16,2,5,3,1],[16,2,2,3,1],[17,0,5,3,7],[17,0,1,3,16],[17,0,2,3,9],[17,0,3,3,3],[17,0,4,3,1],[17,4,5,3,2],[17,1,5,3,1],[17,1,3,3,2],[17,1,4,3,5],[17,2,1,3,1],[18,0,5,3,4],[18,0,1,3,13],[18,0,2,3,10],[18,0,3,3,10],[18,4,5,3,3],[18,1,4,3,4],[19,0,5,3,3],[19,0,1,3,26],[19,0,2,3,15],[19,0,3,3,6],[19,1,3,3,2],[19,1,4,3,2],[19,2,5,3,1],[20,0,5,3,2],[20,0,1,3,16],[20,0,2,3,19],[20,0,3,3,7],[20,4,5,3,6],[20,1,3,3,1],[20,2,0,3,2],[21,0,5,3,8],[21,0,1,3,12],[21,0,2,3,9],[21,0,3,3,2],[21,4,5,3,2],[21,2,5,3,2],[21,2,1,3,1]],"l":[[1,0,5,3,6],[1,0,1,3,11],[1,0,2,3,13],[1,0,3,3,11],[1,0,4,3,3],[1,4,5,3,52],[1,1,2,3,1],[1,2,2,3,1],[2,0,5,3,4],[2,0,1,3,14],[2,0,2,3,12],[2,0,3,3,7],[2,0,4,3,1],[2,4,5,3,24],[2,1,2,3,1],[2,1,3,3,1],[3,0,5,3,8],[3,0,1,3,11],[3,0,2,3,11],[3,0,3,3,5],[3,0,4,3,1],[3,4,5,3,15],[3,1,4,3,2],[4,0,5,3,9],[4,0,1,3,15],[4,0,2,3,18],[4,0,3,3,7],[4,0,4,3,2],[4,4,5,3,18],[4,1,1,3,1],[4,1,2,3,2],[4,1,5,3,1],[4,1,4,3,6],[4,2,2,3,1],[5,0,5,3,4],[5,0,1,3,13],[5,0,2,3,15],[5,0,3,3,4],[5,0,4,3,1],[5,4,5,3,10],[5,1,2,3,2],[5,1,3,3,1],[5,1,4,3,3],[6,0,5,3,4],[6,0,1,3,15],[6,0,2,3,16],[6,0,3,3,5],[6,0,4,3,3],[6,4,5,3,14],[6,1,2,3,4],[6,1,3,3,1],[6,1,4,3,2],[7,0,2,3,15],[7,0,5,3,7],[7,0,1,3,16],[7,0,3,3,12],[7,0,4,3,2],[7,4,5,3,2],[7,1,5,3,1],[7,1,2,3,1],[7,1,3,3,2],[7,1,4,3,2],[8,0,5,3,6],[8,0,1,3,11],[8,0,2,3,19],[8,0,3,3,5],[8,0,4,3,3],[8,4,5,3,11],[8,1,2,3,2],[8,1,3,3,2],[8,1,4,3,2],[8,2,5,3,1],[9,4,5,3,7],[9,0,5,3,7],[9,0,1,3,9],[9,0,2,3,13],[9,0,3,3,9],[9,0,4,3,2],[9,1,2,3,2],[9,1,3,3,1],[10,0,5,3,16],[10,0,1,3,15],[10,0,2,3,31],[10,0,3,3,27],[10,0,4,3,3],[10,4,5,3,24],[10,1,2,3,2],[10,1,3,3,2],[10,1,4,3,4],[11,0,5,3,8],[11,0,1,3,18],[11,0,2,3,13],[11,0,3,3,6],[11,4,5,3,8],[11,1,4,3,3],[11,2,1,3,1],[11,2,2,3,1],[12,0,5,3,5],[12,0,1,3,11],[12,0,2,3,14],[12,0,3,3,7],[12,0,4,3,1],[12,4,5,3,12],[12,1,2,3,4],[12,1,4,3,3],[12,2,1,3,2],[13,0,5,3,7],[13,0,1,3,14],[13,0,2,3,20],[13,0,3,3,11],[13,0,4,3,3],[13,4,5,3,20],[13,1,5,3,1],[13,1,2,3,3],[13,1,3,3,2],[13,1,4,3,3],[14,0,5,3,7],[14,0,1,3,13],[14,0,2,3,17],[14,0,3,3,10],[14,4,5,3,1],[14,1,5,3,1],[14,1,2,3,1],[14,1,4,3,1],[14,2,2,3,1],[15,0,5,3,3],[15,0,1,3,13],[15,0,2,3,17],[15,0,3,3,10],[15,0,4,3,2],[15,4,5,3,16],[15,1,3,3,1],[16,0,2,3,24],[16,0,5,3,20],[16,0,1,3,35],[16,0,3,3,5],[16,0,4,3,3],[16,4,5,3,13],[16,1,2,3,2],[16,1,3,3,2],[16,1,4,3,4],[16,2,2,3,1],[16,2,3,3,1],[17,0,5,3,9],[17,0,1,3,12],[17,0,2,3,19],[17,0,3,3,11],[17,0,4,3,1],[17,4,5,3,12],[17,1,2,3,6],[17,1,3,3,1],[17,1,4,3,2],[17,2,5,3,1],[18,0,5,3,14],[18,0,1,3,12],[18,0,2,3,23],[18,0,3,3,9],[18,0,4,3,1],[18,4,5,3,4],[18,1,5,3,1],[18,1,4,3,2],[19,0,5,3,7],[19,0,1,3,26],[19,0,2,3,12],[19,0,3,3,12],[19,0,4,3,2],[19,4,5,3,10],[19,1,2,3,1],[19,1,3,3,2],[19,1,4,3,2],[19,2,5,3,1],[19,2,1,3,1],[19,2,2,3,1],[19,2,3,3,2],[20,0,5,3,9],[20,0,1,3,20],[20,0,2,3,15],[20,0,3,3,5],[20,0,4,3,1],[20,4,5,3,4],[20,1,1,3,1],[20,1,2,3,12],[20,1,4,3,4],[20,2,2,3,1],[21,0,5,3,12],[21,0,1,3,22],[21,0,2,3,22],[21,0,3,3,12],[21,1,5,3,1],[21,1,2,3,1],[21,1,3,3,4],[21,1,4,3,7],[21,2,2,3,1],[21,2,3,3,1]]},"ms":{"m":[[19,4,2,3,1],[12,0,2,3,7],[18,0,3,3,2],[9,4,0,3,1],[2,4,0,3,3],[11,0,3,0,3],[8,0,2,3,4],[11,0,3,1,3],[5,0,3,3,2],[17,4,0,0,1],[3,0,3,0,5],[12,0,3,3,4],[21,0,0,3,2],[4,0,2,0,3],[3,0,1,0,5],[14,0,2,3,7],[11,0,2,0,1],[14,0,1,0,3],[7,0,2,0,4],[8,0,1,3,1],[19,0,2,0,7],[17,0,1,3,3],[4,4,0,3,2],[4,0,1,3,2],[2,4,0,0,3],[9,0,2,0,5],[11,0,2,3,5],[17,0,3,3,3],[12,0,1,0,5],[10,0,2,0,5],[7,4,0,3,1],[8,0,2,0,7],[7,0,1,0,2],[5,0,2,3,2],[18,0,0,3,2],[10,0,0,3,1],[15,0,0,0,1],[15,0,2,0,4],[11,0,1,0,4],[19,0,2,1,1],[16,0,0,0,1],[3,0,3,3,3],[12,4,0,3,2],[12,0,3,0,3],[11,4,3,0,1],[11,0,4,3,1],[10,0,3,0,5],[2,0,2,3,1],[5,0,0,0,1],[9,0,1,0,3],[11,0,0,3,2],[9,0,1,3,2],[5,0,2,0,6],[16,0,4,0,1],[13,0,3,3,1],[8,0,3,0,3],[11,0,1,3,7],[16,0,3,3,3],[3,0,2,3,1],[12,0,0,1,1],[2,0,1,0,3],[17,0,2,0,3],[2,0,3,3,2],[19,0,0,3,1],[2,0,1,3,1],[16,0,1,0,2],[3,0,2,2,1],[2,0,3,0,3],[2,0,0,0,2],[11,4,0,0,2],[15,0,3,0,6],[2,0,2,0,3],[18,0,0,0,3],[2,0,1,1,2],[5,0,3,0,7],[9,0,0,0,3],[19,0,2,3,2],[4,0,2,3,1],[2,0,2,2,1],[17,0,0,0,3],[3,0,3,1,2],[14,0,2,0,6],[3,0,2,0,4],[7,0,3,0,5],[3,0,0,0,1],[9,0,0,3,1],[4,4,0,2,1],[21,0,4,0,1],[5,0,1,0,4],[5,0,0,3,1],[3,4,0,0,1],[21,0,3,3,5],[4,0,1,0,1],[4,0,3,3,2],[5,0,4,0,1],[7,0,2,1,2],[7,4,0,0,2],[8,0,4,0,1],[7,0,3,3,3],[7,0,1,2,1],[11,0,0,0,1],[14,0,1,2,1],[7,0,0,1,1],[18,0,2,3,1],[15,0,1,0,2],[9,4,1,3,1],[5,0,4,1,1],[12,0,2,0,2],[8,0,4,3,1],[9,0,3,0,3],[17,0,1,0,4],[10,0,2,3,1],[8,0,3,3,2],[12,0,0,3,6],[8,0,1,0,2],[8,0,3,1,1],[21,0,1,0,4],[15,0,2,3,1],[12,0,1,2,1],[15,0,3,3,1],[14,0,0,3,2],[21,0,1,3,4],[9,0,3,3,2],[9,0,2,3,1],[10,0,1,1,1],[16,4,0,3,1],[10,0,1,0,3],[11,4,0,3,2],[14,0,3,1,1],[12,0,1,3,4],[12,0,3,1,2],[19,0,1,3,3],[16,0,2,3,1],[17,4,0,3,1],[17,0,2,3,2],[12,4,0,0,2],[14,0,0,0,1],[14,0,2,2,1],[15,0,0,3,1],[14,0,3,0,3],[14,4,0,3,1],[12,0,0,0,1],[16,0,0,1,1],[19,0,4,3,1],[14,0,1,3,2],[16,0,2,0,1],[14,0,0,1,1],[15,0,1,3,3],[19,0,3,3,2],[19,0,1,1,2],[14,0,3,3,1],[18,4,0,0,1],[16,0,1,3,3],[17,0,3,1,1],[15,0,4,0,2],[18,0,1,0,2],[18,0,3,1,1],[15,0,2,1,1],[18,0,4,0,1],[19,0,3,0,3],[16,0,3,0,1],[17,0,2,1,1],[21,0,2,0,3],[21,0,3,0,6],[17,0,3,0,1],[19,4,0,1,1],[18,0,3,0,4],[21,0,2,3,2],[19,0,1,0,2],[21,0,4,1,1],[19,4,0,0,1],[19,4,0,3,1],[21,4,0,0,1],[21,0,0,0,4],[20,0,3,0,1],[19,4,2,0,1],[12,0,0,2,1],[12,4,0,1,1],[19,2,3,0,1],[8,2,3,0,1],[3,1,4,1,1],[3,1,2,0,2],[3,1,2,3,1],[10,1,2,3,1],[18,1,2,0,1],[2,1,3,0,1],[2,1,3,3,1],[3,2,1,3,1],[2,2,2,0,1],[2,1,4,3,1],[10,2,0,0,1],[3,1,4,0,1],[2,1,4,1,1],[2,1,4,0,1],[3,1,3,0,1],[4,1,3,1,2],[4,2,2,0,1],[4,1,2,0,1],[4,1,4,0,2],[5,1,4,0,1],[8,1,3,0,1],[7,1,4,0,1],[8,1,3,3,1],[8,2,0,0,1],[8,1,4,0,3],[11,1,1,3,1],[8,1,4,1,1],[9,1,3,0,1],[9,1,4,0,1],[10,1,3,0,1],[10,1,4,0,4],[12,2,1,0,1],[11,1,4,0,1],[11,2,0,0,1],[14,2,1,0,1],[12,1,4,0,2],[12,1,4,3,1],[14,1,3,0,1],[14,2,1,3,1],[18,1,3,3,1],[16,2,1,0,1],[15,2,1,3,1],[14,1,4,0,1],[16,2,0,0,1],[16,2,2,2,1],[15,2,0,0,2],[15,1,4,0,1],[18,2,0,3,1],[16,1,3,0,2],[16,2,0,3,1],[16,2,2,0,1],[16,1,4,0,4],[17,1,3,0,1],[17,1,4,1,1],[17,1,4,0,3],[19,1,3,0,2],[18,1,4,3,1],[18,1,4,0,2],[18,1,4,1,1],[19,1,4,0,1],[21,1,3,0,1],[20,1,4,0,1]],"l":[[14,0,0,0,4],[16,0,0,0,2],[13,2,0,0,1],[10,4,0,3,4],[13,0,3,2,1],[14,4,0,0,4],[9,0,0,1,1],[14,4,0,3,2],[14,0,3,0,3],[7,0,2,3,2],[16,0,0,3,5],[11,0,0,0,1],[4,0,1,1,1],[6,0,1,1,3],[6,0,2,3,4],[16,0,3,0,3],[9,0,0,3,3],[7,0,2,0,4],[4,0,0,3,2],[10,0,0,3,1],[6,0,0,0,2],[2,0,1,0,4],[6,0,0,3,1],[10,0,0,0,4],[7,0,1,3,2],[16,0,2,0,4],[4,4,0,3,2],[5,0,2,3,3],[4,0,3,3,2],[18,0,2,0,5],[19,0,2,0,6],[12,0,2,1,2],[2,0,2,3,3],[4,0,1,0,3],[9,0,2,0,1],[7,0,3,0,2],[18,0,1,0,4],[18,0,0,3,2],[20,0,2,3,3],[4,0,1,3,1],[19,0,1,0,1],[6,0,2,0,2],[6,0,1,0,2],[2,0,2,0,3],[14,0,2,1,2],[5,0,1,3,1],[13,0,1,0,2],[21,0,2,3,3],[20,0,1,3,2],[3,0,2,3,3],[3,0,2,1,1],[6,0,1,3,3],[4,0,0,0,2],[5,0,2,0,2],[13,4,0,3,2],[3,0,1,0,2],[10,0,1,0,1],[11,0,3,3,2],[2,0,0,0,1],[4,0,2,0,5],[2,0,3,0,3],[4,0,3,2,1],[21,0,3,1,1],[3,0,0,1,1],[2,0,3,3,1],[5,0,3,2,1],[20,0,3,3,3],[3,0,1,3,1],[3,4,0,3,1],[3,0,2,0,3],[7,0,1,0,3],[3,0,3,0,3],[4,4,0,0,1],[3,4,0,0,1],[9,0,3,0,3],[10,0,2,0,1],[2,4,0,0,1],[6,0,3,0,4],[3,0,0,0,2],[21,0,2,1,2],[5,0,3,0,2],[5,4,0,3,1],[2,4,0,3,1],[9,4,0,0,2],[5,0,1,0,2],[7,0,0,3,1],[6,4,0,3,2],[10,0,3,3,1],[21,4,0,0,6],[9,4,0,3,4],[11,0,3,0,4],[21,0,3,3,2],[7,0,4,3,1],[4,0,3,0,2],[12,0,3,0,4],[7,0,4,1,1],[20,0,1,0,4],[5,0,4,1,1],[3,0,4,0,1],[9,0,1,2,1],[14,0,3,3,2],[5,4,0,0,1],[5,0,1,1,1],[4,0,2,3,1],[4,0,4,0,1],[10,0,3,1,2],[9,4,3,3,1],[5,0,0,1,1],[5,0,2,1,1],[9,0,0,2,1],[9,0,1,0,2],[8,4,0,0,1],[11,0,1,2,1],[6,4,0,0,1],[5,0,0,3,1],[7,0,0,0,2],[9,0,2,3,1],[6,0,3,3,1],[9,0,3,3,2],[7,4,0,0,2],[7,4,0,3,3],[13,0,0,0,1],[13,0,2,0,4],[8,0,2,0,1],[6,0,2,2,1],[11,0,0,3,1],[18,0,4,0,2],[13,0,2,1,1],[12,0,3,1,2],[12,0,1,3,2],[11,0,1,0,4],[11,0,4,0,1],[21,0,0,3,2],[10,4,0,0,1],[13,0,4,0,1],[13,4,0,0,3],[17,0,2,0,4],[12,4,3,1,1],[11,1,0,1,1],[14,0,1,3,1],[14,0,0,1,2],[14,0,2,3,2],[16,4,0,2,1],[21,0,2,0,4],[12,0,0,0,2],[13,0,2,2,1],[12,0,1,0,3],[16,0,3,2,2],[16,4,0,0,1],[10,0,4,0,1],[10,0,2,3,1],[13,0,0,3,1],[10,0,3,0,1],[13,0,1,3,1],[16,0,3,1,3],[13,0,2,3,2],[13,0,3,3,2],[16,0,1,0,3],[16,0,0,1,1],[14,0,2,0,2],[17,0,0,0,2],[12,4,0,3,2],[12,4,0,1,1],[19,0,3,0,2],[17,0,3,0,4],[12,4,0,0,3],[18,0,1,3,2],[16,0,2,3,1],[20,0,3,0,9],[18,0,3,3,5],[17,0,0,2,1],[17,0,0,3,2],[17,0,2,3,3],[16,0,3,3,2],[19,4,0,3,1],[17,0,1,0,1],[14,0,1,0,1],[16,0,4,0,1],[14,0,4,1,1],[19,0,3,2,1],[19,4,0,1,1],[21,0,1,3,1],[18,0,2,3,3],[15,0,3,3,1],[17,0,2,1,2],[19,0,1,3,2],[21,0,1,0,3],[19,0,3,1,1],[18,0,3,2,1],[17,4,0,0,3],[17,0,2,2,1],[19,0,4,0,2],[19,0,2,1,2],[20,4,2,0,1],[21,0,0,0,2],[18,0,4,2,1],[18,0,4,3,1],[21,4,3,0,1],[18,0,0,0,1],[19,0,3,3,4],[20,0,2,0,3],[18,0,3,0,1],[19,4,0,0,2],[20,0,0,0,2],[19,0,2,2,1],[20,0,2,1,1],[19,0,0,0,1],[21,0,0,1,2],[20,4,0,3,1],[20,0,4,3,1],[20,0,0,3,4],[6,4,4,3,1],[21,0,3,0,1],[9,0,0,0,1],[20,0,0,1,1],[2,0,2,1,1],[11,0,2,0,1],[3,0,0,3,1],[19,1,2,0,1],[11,4,0,0,1],[13,1,2,0,2],[14,1,2,3,1],[13,1,3,3,1],[4,2,0,0,1],[3,2,2,0,1],[3,1,4,1,1],[3,1,4,0,1],[7,1,2,0,2],[4,1,0,3,1],[5,2,2,0,2],[6,1,4,0,3],[4,1,4,0,3],[5,1,4,3,2],[5,1,1,3,1],[6,1,4,3,1],[5,1,4,0,2],[6,1,3,0,1],[6,1,3,3,1],[9,1,2,0,2],[8,1,2,3,1],[15,1,3,0,1],[7,1,4,0,2],[7,1,3,0,1],[9,1,2,1,1],[9,1,4,3,1],[8,1,4,3,1],[10,1,2,0,1],[9,1,3,0,2],[13,1,4,0,4],[11,1,3,3,1],[11,1,3,0,1],[10,1,4,0,1],[18,1,2,0,3],[12,1,4,0,3],[11,1,4,0,2],[11,1,4,1,1],[13,1,4,3,1],[13,1,2,3,1],[14,1,2,0,2],[13,1,3,1,1],[14,1,4,0,1],[19,1,2,3,1],[16,1,4,0,4],[16,2,3,1,1],[18,1,3,3,1],[21,1,2,0,4],[17,1,4,0,1],[17,1,4,1,1],[17,2,0,3,1],[18,1,4,0,2],[19,2,0,3,1],[19,2,2,0,1],[21,1,3,0,2],[19,1,4,1,1],[19,2,1,0,1],[19,1,4,0,1],[20,1,2,0,1],[20,1,4,1,2],[21,1,2,3,1],[20,1,4,0,2],[21,1,4,0,5],[21,2,3,0,1],[21,1,4,1,1],[21,2,2,0,1],[17,0,0,1,1]]},"md":{"m":[[4,0,3,1,1],[7,0,2,0,5],[18,0,3,3,1],[9,4,0,3,1],[11,0,3,0,3],[12,0,3,1,3],[21,0,3,0,9],[18,0,2,1,1],[3,0,3,0,7],[12,0,3,0,3],[3,4,0,0,2],[3,0,1,0,3],[10,4,0,0,1],[21,0,2,0,4],[2,4,0,0,3],[14,0,2,3,1],[9,0,2,0,6],[12,0,1,0,5],[12,0,2,0,4],[19,0,2,0,7],[7,0,1,0,2],[15,0,0,0,1],[15,0,2,0,2],[11,0,1,0,4],[19,0,2,1,1],[16,0,0,0,1],[4,0,3,3,2],[16,0,2,0,4],[18,0,3,0,5],[12,4,3,0,1],[4,0,2,0,3],[11,0,4,3,1],[10,0,3,0,4],[2,0,2,3,1],[10,0,2,0,2],[5,0,0,0,1],[3,0,2,0,6],[9,0,1,0,3],[16,0,4,0,1],[8,0,3,0,3],[2,0,3,0,3],[12,0,0,1,1],[2,0,1,0,3],[18,0,2,0,1],[3,0,3,3,1],[2,0,1,3,1],[16,0,1,0,4],[3,0,2,2,1],[11,4,0,0,2],[17,0,3,0,2],[17,0,2,0,2],[2,0,2,0,3],[18,0,0,0,4],[4,0,3,2,1],[9,0,1,1,1],[5,0,2,0,7],[15,0,3,0,5],[5,0,3,0,7],[2,0,3,1,1],[4,0,2,3,1],[2,0,2,2,1],[2,4,0,3,1],[2,0,1,1,1],[3,0,3,1,2],[14,0,2,0,6],[4,0,3,0,1],[3,0,0,0,1],[4,4,0,2,1],[21,0,4,0,1],[5,0,1,0,3],[7,0,3,0,4],[2,0,0,0,1],[5,0,0,3,1],[4,0,1,0,1],[5,0,4,0,1],[9,0,2,1,1],[7,4,0,0,2],[8,0,4,0,1],[5,0,3,3,1],[7,0,1,2,1],[11,0,0,0,1],[14,0,1,2,1],[7,0,0,1,1],[12,0,3,3,1],[18,0,1,0,3],[9,4,1,3,1],[5,0,4,1,1],[7,0,2,1,1],[7,0,3,3,2],[10,0,0,0,2],[11,0,0,3,1],[8,0,2,3,1],[8,0,2,0,4],[17,0,1,0,3],[10,0,2,3,1],[11,0,1,3,3],[8,0,1,0,1],[8,0,3,1,1],[21,0,1,0,2],[15,0,2,3,1],[12,0,1,2,1],[8,0,3,3,1],[9,0,3,0,2],[9,0,2,3,1],[10,0,1,1,1],[14,0,1,0,2],[9,0,3,3,1],[10,0,1,0,2],[14,0,3,1,1],[12,4,0,3,1],[17,0,0,0,1],[14,0,3,0,3],[12,4,0,0,2],[14,0,0,0,1],[14,0,2,2,1],[12,0,0,3,1],[13,0,0,3,1],[12,0,0,0,1],[15,0,0,1,1],[21,0,4,3,1],[17,0,1,3,1],[13,0,3,3,1],[14,0,0,3,1],[16,0,3,3,2],[14,0,0,1,1],[15,0,1,3,3],[19,0,3,3,2],[16,0,1,3,1],[19,0,1,1,2],[18,4,0,0,1],[16,0,3,0,2],[15,0,4,0,2],[18,0,3,1,1],[15,0,2,1,1],[18,0,4,0,1],[19,0,3,0,3],[17,0,2,1,1],[21,4,0,1,1],[19,0,1,0,2],[21,0,4,1,1],[19,4,0,0,2],[19,4,0,3,1],[21,4,0,0,1],[21,0,0,0,3],[21,0,3,3,1],[21,0,1,3,1],[19,4,2,0,1],[12,0,0,2,1],[5,4,0,0,1],[12,4,0,1,1],[19,2,3,0,1],[7,1,4,0,2],[3,1,2,0,2],[5,2,0,0,1],[11,1,2,3,1],[18,1,2,0,1],[7,2,1,3,1],[2,1,3,0,1],[2,1,3,3,1],[5,2,1,3,1],[2,2,2,0,1],[10,2,0,0,1],[2,1,4,0,1],[5,1,3,0,1],[4,1,3,1,2],[5,2,2,0,1],[4,1,2,0,1],[4,1,4,0,2],[5,1,4,0,1],[9,1,3,0,2],[8,1,3,3,1],[8,2,0,0,1],[8,1,4,0,3],[8,1,4,1,1],[10,1,4,0,4],[10,1,3,0,1],[12,2,1,0,1],[11,1,4,0,1],[11,2,0,0,1],[15,2,1,0,1],[12,1,4,0,2],[12,1,4,3,1],[15,1,3,0,1],[21,1,3,3,1],[16,2,1,0,1],[14,1,4,0,1],[16,2,0,0,1],[17,2,2,2,1],[15,2,0,0,2],[18,2,0,3,1],[16,1,3,0,1],[16,2,0,3,1],[16,2,2,0,1],[16,1,4,0,4],[17,1,3,0,1],[17,1,4,1,1],[17,1,4,0,1],[19,1,3,0,2],[18,1,4,0,2],[19,1,4,0,1],[21,1,3,0,1],[21,1,4,0,1]],"l":[[16,0,0,0,1],[19,0,0,0,1],[13,2,0,0,1],[7,4,0,3,1],[13,0,3,2,1],[14,4,0,0,5],[14,0,3,0,1],[7,0,2,3,1],[17,4,0,1,1],[6,0,1,1,3],[7,0,2,0,4],[2,0,1,0,1],[10,0,0,0,4],[11,0,2,0,2],[20,0,2,0,3],[7,0,1,3,1],[12,0,2,1,2],[4,0,1,0,3],[5,0,2,0,3],[9,0,2,0,1],[14,0,0,0,3],[11,0,3,0,5],[13,0,3,0,1],[19,0,1,0,1],[2,0,2,0,2],[14,0,2,1,1],[13,0,1,0,2],[3,0,2,1,1],[6,0,2,0,1],[4,0,0,0,3],[6,0,1,0,1],[10,0,1,0,2],[3,0,1,0,3],[19,0,2,0,4],[8,0,1,0,1],[21,0,1,3,1],[11,0,1,0,3],[4,0,3,0,3],[2,0,3,0,3],[10,0,3,2,1],[21,0,3,1,1],[5,0,3,2,1],[3,0,0,0,4],[3,0,1,3,1],[3,0,2,0,3],[9,0,1,0,3],[3,0,3,0,3],[4,4,0,0,2],[1,0,0,1,1],[2,4,0,0,1],[6,0,3,0,4],[9,0,3,0,2],[20,0,2,1,2],[4,0,2,0,3],[7,0,1,0,4],[5,0,3,0,1],[2,4,0,3,1],[9,4,0,0,2],[5,0,1,0,2],[21,0,0,3,1],[9,4,0,3,2],[12,0,3,0,4],[6,0,2,3,1],[7,0,4,1,1],[9,0,4,1,1],[3,0,4,0,1],[14,0,3,3,2],[5,4,0,0,1],[5,0,1,1,1],[5,0,4,0,1],[13,0,0,0,3],[11,0,3,1,2],[11,4,3,3,1],[6,0,0,1,1],[6,0,2,1,1],[9,0,0,2,1],[8,4,0,0,1],[21,4,0,0,4],[7,0,3,0,1],[20,0,1,0,1],[6,0,0,3,1],[7,0,0,0,1],[6,0,3,3,1],[13,4,0,0,4],[13,0,2,0,2],[6,0,2,2,1],[7,4,0,0,1],[13,0,2,1,1],[12,0,3,1,2],[16,0,3,0,3],[12,0,4,0,1],[10,0,3,3,1],[17,0,2,0,4],[12,4,3,1,1],[11,1,0,1,1],[14,0,0,1,2],[10,0,3,1,1],[21,0,2,0,4],[16,0,2,0,4],[13,0,2,2,1],[16,0,3,2,1],[16,4,0,0,1],[10,0,4,0,1],[10,0,3,0,1],[13,0,1,3,1],[12,0,0,0,1],[12,0,1,0,2],[16,0,1,0,1],[14,0,2,0,2],[17,0,0,0,2],[16,0,3,1,2],[13,0,2,3,1],[12,4,0,1,1],[19,0,3,0,2],[17,0,3,0,3],[12,4,0,0,1],[20,0,3,0,6],[21,0,1,0,4],[17,0,0,2,1],[18,0,1,0,2],[17,0,0,3,1],[18,0,3,2,2],[17,0,1,0,1],[14,0,1,0,1],[16,0,4,0,1],[18,0,4,0,1],[13,0,3,3,1],[16,0,0,3,1],[14,0,4,1,1],[19,0,3,2,1],[19,4,0,1,1],[18,0,3,3,2],[17,0,2,1,1],[19,0,1,3,1],[18,0,2,0,2],[19,0,3,1,1],[17,4,0,0,3],[18,0,2,3,1],[18,0,3,0,2],[17,0,2,2,1],[19,0,4,0,1],[19,0,2,1,2],[20,4,2,0,1],[21,0,3,0,1],[21,0,0,0,2],[18,0,4,3,1],[18,0,0,0,2],[19,4,0,0,2],[19,0,3,3,1],[21,0,2,1,1],[20,0,0,0,3],[20,0,2,2,1],[21,0,0,1,2],[10,0,2,0,1],[20,4,0,0,1],[9,0,0,0,1],[9,0,0,3,1],[8,0,2,0,1],[20,0,0,1,1],[2,0,2,1,1],[18,0,0,2,1],[20,0,3,3,1],[19,1,2,0,1],[11,4,0,0,1],[14,1,2,3,1],[4,2,0,0,1],[7,1,3,3,1],[3,2,2,0,1],[3,1,4,1,1],[3,1,4,0,1],[7,1,2,0,1],[5,2,2,0,2],[4,1,4,0,2],[14,1,4,0,3],[5,1,4,0,2],[6,1,3,0,1],[5,1,4,3,1],[6,1,4,0,2],[10,1,2,0,2],[15,1,3,0,1],[7,1,4,0,2],[7,1,3,0,1],[9,1,2,1,1],[9,1,2,0,1],[9,1,3,0,1],[13,1,2,0,1],[16,1,4,0,5],[11,1,3,0,1],[10,1,4,0,1],[18,1,2,0,3],[11,1,4,0,2],[11,1,4,1,1],[13,1,2,3,1],[12,1,4,0,1],[14,1,2,0,2],[13,1,4,0,2],[13,1,3,1,1],[19,1,2,3,1],[16,2,3,1,1],[21,1,3,3,1],[21,1,2,0,3],[17,1,4,0,1],[17,1,4,1,1],[17,2,0,3,1],[18,1,4,0,1],[19,2,0,3,1],[19,2,2,0,1],[21,1,3,0,2],[19,1,4,1,1],[19,2,1,0,1],[19,1,4,0,1],[20,1,4,1,2],[20,1,4,0,2],[21,1,4,0,4],[21,2,3,0,1],[21,2,2,0,1],[17,0,0,1,1],[9,0,3,1,1]]},"ord":{"m":[[7,0,2,0,2],[21,0,3,0,4],[12,0,3,0,2],[9,0,0,0,1],[12,0,2,0,2],[15,0,2,0,1],[5,0,3,0,2],[16,4,0,0,1],[2,0,1,0,2],[17,0,2,0,1],[11,0,2,0,1],[2,0,3,0,1],[5,0,0,0,1],[16,0,1,0,2],[3,0,3,0,1],[9,0,1,1,1],[2,0,2,1,1],[3,0,2,0,1],[21,0,4,0,1],[9,4,0,0,1],[5,0,1,0,1],[9,0,3,0,1],[10,0,3,0,1],[10,0,0,0,1],[17,0,1,0,1],[8,0,2,0,1],[11,0,3,0,2],[14,0,1,0,1],[18,0,0,0,2],[13,4,0,0,1],[18,0,3,0,2],[18,0,3,1,1],[15,0,4,0,1],[15,0,3,0,1],[21,4,0,1,1],[19,0,3,0,1],[10,4,4,1,1],[5,4,0,0,1],[20,4,0,0,1],[12,0,0,0,1],[19,2,3,0,1],[7,1,4,0,3],[19,1,2,1,1],[9,1,3,0,1],[8,1,4,0,4],[18,1,2,0,1],[14,1,3,0,1],[8,1,3,0,1],[2,2,2,0,1],[16,2,0,0,1],[3,1,2,0,1],[2,1,4,0,1],[4,1,2,0,1],[4,1,4,0,1],[5,1,4,0,1],[8,2,0,0,1],[8,1,4,1,1],[11,1,4,0,1],[10,1,4,0,2],[18,1,4,0,3],[12,1,4,0,2],[14,1,4,0,2],[17,1,3,0,2],[15,2,0,0,2],[16,1,3,0,1],[16,1,4,0,2],[17,1,4,0,2],[19,1,3,0,2],[19,1,4,0,1],[21,1,4,0,1]],"l":[[10,0,3,0,1],[5,0,1,0,2],[9,0,1,1,1],[5,0,3,0,1],[2,0,0,1,1],[21,0,2,0,3],[9,0,3,0,1],[11,0,2,0,1],[9,4,0,0,1],[10,0,2,1,1],[16,0,3,1,1],[18,0,1,0,1],[3,0,2,0,2],[3,0,4,0,2],[9,0,0,0,2],[7,0,0,0,1],[3,0,3,0,1],[6,0,3,0,1],[14,0,1,0,3],[4,0,2,0,2],[11,0,3,0,2],[5,0,4,0,1],[9,0,1,0,1],[12,0,3,1,1],[19,4,0,0,1],[12,4,3,1,1],[10,0,3,1,1],[20,0,3,0,1],[10,0,4,0,1],[14,4,0,0,1],[12,0,0,0,1],[18,0,3,0,1],[16,0,2,0,1],[12,0,2,1,1],[17,0,0,0,1],[12,4,0,0,1],[17,0,0,2,1],[13,4,0,0,1],[19,0,2,0,2],[18,0,0,0,1],[17,4,0,0,1],[21,0,0,0,2],[20,4,0,0,1],[20,0,0,0,1],[9,0,2,0,1],[20,4,0,2,1],[10,0,1,0,1],[17,0,3,1,1],[8,0,3,0,1],[5,1,0,0,1],[15,1,4,0,1],[18,1,4,0,2],[4,1,2,0,1],[19,1,4,1,1],[4,1,4,0,3],[7,1,2,0,1],[12,2,2,0,1],[10,2,2,0,1],[8,1,4,0,1],[6,1,3,0,1],[10,1,4,0,1],[6,1,4,0,1],[18,1,2,0,2],[15,1,3,0,1],[7,1,4,0,2],[7,1,3,0,1],[13,1,2,0,2],[12,1,2,0,1],[16,1,4,0,3],[11,1,3,0,1],[13,1,4,0,3],[11,1,4,0,1],[14,1,4,0,2],[16,1,2,0,1],[17,1,4,0,2],[17,2,3,1,1],[21,1,4,0,2],[21,1,2,0,3],[19,2,2,0,1],[20,2,1,0,1],[19,1,4,0,1],[20,1,4,1,1],[21,1,3,0,1],[21,2,2,0,1]]},"hoto":{"m":[[11,0,2,0,1],[14,0,3,0,2],[10,0,3,0,2],[14,0,2,0,2],[18,0,2,0,1],[9,0,1,0,1],[17,0,2,0,1],[15,0,3,0,1],[7,0,2,0,1],[7,0,0,0,1],[2,0,1,0,1],[17,0,1,0,1],[5,0,3,0,1],[3,0,3,0,1],[1,0,3,0,1],[3,0,2,1,1],[9,0,3,0,2],[9,4,0,0,1],[20,0,1,0,1],[12,0,3,0,2],[9,0,2,0,1],[15,0,1,0,1],[16,0,3,0,1],[15,4,0,0,1],[18,0,3,0,2],[15,0,4,0,1],[21,0,3,0,1],[8,4,0,0,1],[14,0,0,0,1],[20,2,3,0,1],[7,1,4,0,3],[9,1,3,0,1],[21,1,2,0,1],[15,1,3,0,1],[1,2,3,1,1],[4,2,2,0,1],[16,2,0,0,1],[3,1,2,0,1],[9,1,4,0,1],[7,1,2,0,1],[10,1,4,0,1],[8,2,0,0,1],[11,1,4,0,3],[16,1,4,0,2],[12,1,4,0,1],[15,1,4,0,1],[18,1,3,0,1],[17,2,0,0,1],[15,2,0,0,1],[17,1,4,0,3],[21,1,4,0,2],[20,1,3,0,2],[21,1,3,0,1],[20,1,4,0,1]],"l":[[14,0,3,0,1],[12,0,1,1,1],[8,0,3,0,2],[2,0,0,1,1],[21,0,2,0,1],[11,0,3,0,1],[11,0,2,0,1],[16,4,0,0,1],[10,0,2,1,1],[17,0,3,1,1],[19,0,1,0,1],[6,0,1,0,1],[5,0,2,0,1],[7,0,4,0,1],[11,0,0,0,1],[8,0,0,0,1],[3,0,3,0,1],[4,0,2,0,2],[6,0,2,0,1],[13,0,0,0,2],[15,0,3,0,1],[5,0,4,0,1],[17,0,1,0,1],[9,0,4,0,1],[9,0,1,0,1],[18,0,3,1,1],[21,4,0,0,2],[16,4,3,1,1],[10,0,3,1,1],[21,0,3,0,1],[16,0,3,0,1],[13,0,4,0,1],[14,4,0,0,2],[18,0,3,0,1],[16,0,2,0,1],[13,0,2,1,1],[13,4,0,0,1],[19,0,0,0,1],[19,4,0,0,1],[21,0,0,0,1],[20,0,2,0,1],[15,0,2,0,1],[12,0,1,0,1],[9,0,3,0,1],[6,1,0,0,1],[15,1,4,0,3],[18,1,4,0,2],[4,1,2,0,1],[2,1,4,1,1],[4,1,4,0,1],[9,1,2,0,1],[21,2,2,0,1],[5,1,4,0,1],[11,2,2,0,1],[8,1,4,0,1],[8,1,3,0,1],[11,1,4,0,1],[17,1,3,0,1],[7,1,4,0,2],[7,1,3,0,1],[16,1,2,0,1],[12,1,2,0,1],[13,1,2,0,1],[16,1,4,0,2],[11,1,3,0,1],[13,1,4,0,2],[17,1,4,0,2],[19,1,2,0,1],[19,1,4,0,2],[17,2,3,1,1],[21,1,4,0,1],[21,1,2,0,2],[19,2,2,0,1],[20,2,1,0,1],[21,1,3,0,1]]}}};
+  const N = T.mtd.bql.length;
+  const LABELS = Array.from({length: N}, (_, i) => 'Jul ' + (i + 1));
+  const STAGES = [
+    {id: 'bqlms',   title: 'BQL → MS conversion',    num: 'ms',   den: 'bql', useKw: false},
+    {id: 'msmd',    title: 'MS → MD conversion',     num: 'md',   den: 'ms',  useKw: false},
+    {id: 'mdord',   title: 'MD → Order conversion',  num: 'ord',  den: 'md',  useKw: true},
+    {id: 'ordhoto', title: 'Order → HOTO conversion',num: 'hoto', den: 'ord', useKw: true},
+  ];
+  let convMode = 'daily';   // 'daily' | 'cum' — cumulative = cum(num)/cum(den) through that day
+  const chSel = document.getElementById('ct2a-ch');
+  const lsSel = document.getElementById('ct2a-ls');
+  const kwSel = document.getElementById('ct2a-kw');
+  const FT_CH = ['Digital','Referral','SolarPro','BTL','Others'];
+  const FT_LS = ['0-2','2-5','5-7','7-9','9-10'];
+  const FT_KW = ['≤3.24 kW','3.24–5.4 kW','>5.4 kW','Unknown'];
+  function fIdx(sel, dims) { return sel.value === '__ALL__' ? -1 : dims.indexOf(sel.value); }
+  function allBase() { return chSel.value === '__ALL__' && lsSel.value === '__ALL__' && kwSel.value === '__ALL__'; }
+  function sliceDaily(stage, per, useKw) {
+    const chI = fIdx(chSel, FT_CH), lsI = fIdx(lsSel, FT_LS), kwI = fIdx(kwSel, FT_KW);
+    const out = new Array(N).fill(0);
+    for (const [d, ci, li, ki, n] of T.slice[stage][per]) {
+      if (chI !== -1 && ci !== chI) continue;
+      if (lsI !== -1 && li !== lsI) continue;
+      if (useKw && kwI !== -1 && ki !== kwI) continue;
+      if (d >= 1 && d <= N) out[d-1] += n;
+    }
+    return out;
+  }
+  function ratio(numArr, denArr) {
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = numArr[i], d = denArr[i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  function conv(src, numK, denK) {   // target only
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = src[numK][i], d = src[denK][i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  const convCharts = {};
+  function buildConvCharts() { STAGES.forEach(st => {
+    const el = document.getElementById('ct2a-' + st.id);
+    if (!el) return;
+    if (convCharts[st.id]) convCharts[st.id].destroy();
+    const RAWS = [
+      ratio(sliceDaily(st.num, 'm', st.useKw), sliceDaily(st.den, 'm', st.useKw)),
+      ratio(sliceDaily(st.num, 'l', st.useKw), sliceDaily(st.den, 'l', st.useKw)),
+      allBase() ? conv(T.tgt, st.num, st.den) : Array.from({length: N}, () => null),
+    ];
+    const clamp = a => a.map(v => v === null ? null : Math.min(v, 100));
+    const capped = (raw, i) => raw[i] !== null && raw[i] > 100;
+    const pr = (raw, base) => ctx => capped(raw, ctx.dataIndex) ? 5 : base;
+    const ps = raw => ctx => capped(raw, ctx.dataIndex) ? 'triangle' : 'circle';
+    convCharts[st.id] = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: clamp(RAWS[0]), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: pr(RAWS[0], 2), pointStyle: ps(RAWS[0]), pointBackgroundColor: '#1d4ed8', tension: 0.25, spanGaps: true},
+        {label: 'LMTD',   data: clamp(RAWS[1]), borderColor: '#93c5fd', borderWidth: 2, pointRadius: pr(RAWS[1], 2), pointStyle: ps(RAWS[1]), pointBackgroundColor: '#93c5fd', tension: 0.25, spanGaps: true},
+        {label: 'Target', data: clamp(RAWS[2]), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: pr(RAWS[2], 0), pointStyle: ps(RAWS[2]), pointBackgroundColor: '#f59e0b', tension: 0.1, spanGaps: true},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: st.title + (convMode === 'cum' ? ' · cumulative' : ' · daily'), align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => {
+            const rv = RAWS[ctx.datasetIndex][ctx.dataIndex];
+            const jn = ctx.dataset.label === 'LMTD' ? ' (Jun ' + (ctx.dataIndex + 1) + ')' : '';
+            if (rv === null) return ctx.dataset.label + jn + ': –';
+            return ctx.dataset.label + jn + ': ' + rv.toFixed(1) + '%' + (rv > 100 ? ' ▲ above 100% — axis capped' : '');
+          }}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {min: 0, max: 100, grid: {color: '#eee'}, ticks: {stepSize: 20, font: {size: 9}, callback: v => v + '%'}}}}
+    });
+  }); }
+  buildConvCharts();
+  const cvD = document.getElementById('ct2a-conv-daily'), cvC = document.getElementById('ct2a-conv-cum');
+  function setConvBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  cvD.addEventListener('click', () => { convMode = 'daily'; setConvBtn(cvD, cvC); buildConvCharts(); });
+  cvC.addEventListener('click', () => { convMode = 'cum';   setConvBtn(cvC, cvD); buildConvCharts(); });
+  [chSel, lsSel, kwSel].forEach(s => s.addEventListener('change', () => { buildConvCharts(); buildOrder(); }));
+  // Order trend (daily / cumulative)
+  let ordChart = null, mode = 'daily';
+  function series(src) {
+    const arr = src.ord.slice(0, N);
+    if (mode === 'daily') return arr;
+    let c = 0; return arr.map(v => (c += v));
+  }
+  function ordSlice(per) {
+    const arr = sliceDaily('ord', per, false);
+    if (mode === 'daily') return arr;
+    let c = 0; return arr.map(v => (c += v));
+  }
+  function buildOrder() {
+    const el = document.getElementById('ct2a-order');
+    if (!el) return;
+    if (ordChart) ordChart.destroy();
+    ordChart = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: ordSlice('m'), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: 2, tension: 0.25, fill: mode === 'cum'},
+        {label: 'LMTD',   data: ordSlice('l'), borderColor: '#93c5fd', borderWidth: 2, pointRadius: 2, tension: 0.25},
+        {label: 'Target', data: allBase() ? series(T.tgt).map(v => Math.round(v * 10) / 10) : Array.from({length: N}, () => null), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: 0, tension: 0.1},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: mode === 'daily' ? 'Orders per day · FS' : 'Cumulative orders · FS', align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => ctx.dataset.label + (ctx.dataset.label === 'LMTD' ? ' (Jun ' + (ctx.dataIndex + 1) + ')' : '') + ': ' + ctx.parsed.y}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {beginAtZero: true, grid: {color: '#eee'}, ticks: {font: {size: 9}}, title: {display: true, text: 'Orders', font: {size: 9}}}}}
+    });
+  }
+  const bD = document.getElementById('ct2a-ord-daily'), bC = document.getElementById('ct2a-ord-cum');
+  function setBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  bD.addEventListener('click', () => { mode = 'daily'; setBtn(bD, bC); buildOrder(); });
+  bC.addEventListener('click', () => { mode = 'cum';   setBtn(bC, bD); buildOrder(); });
+  buildOrder();
+})();
+</script>
+</body></html>
