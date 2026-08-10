@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en"><head>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<meta charset="UTF-8"><title>Solapur · City Report · Aug 6, 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#FAFAF7; --surface:#FFFFFF; --ink:#14110F; --ink-2:#3D3833;
+    --muted:#7A746E; --line:#E8E4DE; --line-2:#D9D3CB;
+    --accent:#F6A623; --green:#1E8A4C; --green-soft:#DEF1E3;
+    --amber:#B97400; --amber-soft:#FCEBC8; --red:#B43A2A; --red-soft:#FADCD3;
+    --blue:#2F5BB7;
+  }
+  * { box-sizing: border-box; }
+  html,body { margin:0; padding:0; background:var(--bg); color:var(--ink);
+    font-family:'Inter',-apple-system,system-ui,sans-serif; font-size:12px; line-height:1.4; }
+  .wrap { max-width:1200px; margin:16px auto; padding:22px 28px; background:#fff;
+    box-shadow:0 1px 3px rgba(0,0,0,0.08); border-radius:6px; }
+  header { display:flex; align-items:baseline; justify-content:space-between;
+    padding-bottom:11px; border-bottom:2px solid var(--ink); margin-bottom:16px; }
+  header h1 { font-size:19px; font-weight:700; margin:0; letter-spacing:-0.01em; }
+  header .meta { font-size:11px; color:var(--muted); font-weight:500; }
+  .num { font-variant-numeric:tabular-nums; }
+  .section-title { font-size:10.5px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.1em; margin:18px 0 9px;
+    padding-bottom:5px; border-bottom:1px solid var(--line); }
+  .section-title:first-child { margin-top:0; }
+  .sub-title { font-size:10px; font-weight:700; color:var(--ink-2);
+    text-transform:uppercase; letter-spacing:0.08em; margin:12px 0 6px; }
+
+  .callouts { padding:14px 18px 14px 20px; border-radius:0 4px 4px 0;
+    background:#FFFDF6; border-left:4px solid var(--accent); margin-bottom:16px; }
+  .callouts .callout-title { font-size:10px; font-weight:700; color:var(--accent);
+    text-transform:uppercase; letter-spacing:0.12em; margin-bottom:10px;
+    padding-bottom:6px; border-bottom:1px solid rgba(246,166,35,0.25); }
+  .buckets-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 22px; }
+  .bucket { min-width:0; }
+  .bucket-lbl { font-size:10.5px; font-weight:700; color:var(--ink);
+    margin-bottom:4px; padding-bottom:3px; border-bottom:1px dotted var(--line-2); }
+  .bucket.empty .bucket-lbl { color:var(--muted); font-weight:600; }
+  .bucket-empty { font-size:10.5px; color:var(--green); font-style:italic;
+    padding-left:2px; margin-top:2px; }
+  .bucket.empty .bucket-empty { color:var(--muted); }
+  .callouts ul { margin:0; padding-left:16px; font-size:11px; }
+  .callouts li { margin-bottom:3px; line-height:1.45; }
+  .callouts li.good { color:var(--green); }
+  .callouts li.bad  { color:var(--red); }
+  .callouts li b { font-weight:600; color:var(--ink); }
+
+  .kpi-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .kpi { padding:8px 10px; border-radius:4px; background:#FAFAF7;
+    border-left:3px solid var(--line-2); }
+  .kpi.good  { border-left-color:var(--green); background:var(--green-soft); }
+  .kpi.bad   { border-left-color:var(--red);   background:var(--red-soft); }
+  .kpi.amber { border-left-color:var(--amber); background:var(--amber-soft); }
+  .kpi .label { font-size:9px; text-transform:uppercase; letter-spacing:0.06em;
+    color:var(--muted); font-weight:600; }
+  .kpi .big { font-size:16px; font-weight:700; letter-spacing:-0.01em; }
+  .kpi .meta { font-size:10px; color:var(--ink-2); margin-top:2px; }
+  .kpi .pctd { font-size:11px; font-weight:600; }
+  .kpi.good .pctd  { color:var(--green); }
+  .kpi.bad .pctd   { color:var(--red); }
+  .kpi.amber .pctd { color:var(--amber); }
+
+  .funnel-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:10px; }
+  .funnel-card { padding:9px 10px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .funnel-card .stage { font-size:10px; font-weight:600; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px; }
+  .funnel-card .big  { font-size:18px; font-weight:700; letter-spacing:-0.01em; line-height:1.1; }
+  .funnel-card .meta { font-size:10px; color:var(--muted); }
+  .funnel-card .kpi-row { display:flex; justify-content:space-between; align-items:baseline;
+    font-size:10px; padding-top:5px; margin-top:5px; border-top:1px dashed var(--line); }
+  .funnel-card .kpi-row .lbl { color:var(--muted); text-transform:uppercase; letter-spacing:0.04em; font-size:9px; }
+  .funnel-card .kpi-row .val { font-weight:600; font-variant-numeric:tabular-nums; }
+  .funnel-card.good .big  { color:var(--green); }
+  .funnel-card.bad  .big  { color:var(--red); }
+  .funnel-card.amber .big { color:var(--amber); }
+
+  .chan-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; }
+  .chan-tile { padding:6px 9px; border-radius:3px; font-size:11px; background:#FAFAF7;
+    border:1px solid var(--line); font-variant-numeric:tabular-nums; }
+  .chan-tile .ch { font-weight:600; margin-right:6px; }
+  .chan-tile.short { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .chan-tile.over  { background:var(--green-soft); border-color:rgba(30,138,76,0.2); }
+
+  /* TAT + AOV + ageing side-by-side */
+  .side-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .side-card { padding:12px 14px; border-radius:4px; background:#FAFAF7; border:1px solid var(--line); }
+  .side-card h4 { margin:0 0 6px; font-size:11px; font-weight:700; color:var(--ink);
+    text-transform:uppercase; letter-spacing:0.06em; }
+  .big-metric { font-size:22px; font-weight:700; letter-spacing:-0.01em; line-height:1; }
+  .big-metric.good { color:var(--green); }
+  .big-metric.bad  { color:var(--red); }
+  .big-metric.amber { color:var(--amber); }
+  .metric-note { font-size:10.5px; color:var(--ink-2); margin-top:4px; line-height:1.4; }
+  .trend-chip { display:inline-block; padding:1px 7px; border-radius:3px; font-size:10px;
+    font-weight:600; margin-left:6px; }
+  .trend-chip.up  { background:var(--red-soft);   color:var(--red);   border:1px solid rgba(180,58,42,0.2); }
+  .trend-chip.dn  { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .trend-chip.flat{ background:#F1ECE5;           color:var(--muted); border:1px solid var(--line); }
+
+  .ageing-grid { display:grid; grid-template-columns:repeat(6,1fr); gap:6px; margin-top:6px; }
+  .ageing-tile { padding:8px 6px; border-radius:3px; background:#FAFAF7;
+    border:1px solid var(--line); text-align:center; }
+  .ageing-tile.high { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .ageing-tile.mid  { background:var(--amber-soft); border-color:rgba(185,116,0,0.15); }
+  .ageing-tile .b-label { font-size:10px; color:var(--muted); font-weight:600;
+    text-transform:uppercase; letter-spacing:0.04em; }
+  .ageing-tile .b-count { font-size:16px; font-weight:700; margin-top:2px; }
+  .ageing-tile .b-pct   { font-size:10px; color:var(--ink-2); }
+
+  /* ---- SC HOTO-count distribution (Section 2a) ---- */
+  table.hd { width:100%; border-collapse:separate; border-spacing:0; font-size:10.5px;
+    background:#fff; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  table.hd thead th { background:#F5F1EA; color:var(--ink-2); font-weight:700; font-size:9.5px;
+    padding:7px 8px; text-align:center; white-space:nowrap; letter-spacing:0.04em;
+    text-transform:uppercase; border-bottom:1px solid var(--line); }
+  table.hd thead th.left { text-align:left; }
+  table.hd thead th.tot  { background:#EEEAE0; border-left:2px solid var(--line); }
+  table.hd tbody td { padding:8px; text-align:center; border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums; }
+  table.hd tbody tr:last-child td { border-bottom:none; }
+  table.hd tbody td.left { text-align:left; font-weight:700; white-space:nowrap; }
+  table.hd tbody td.tot  { background:#FAF7F2; border-left:2px solid var(--line); font-weight:700; }
+  table.hd tbody tr.hd-lmtd td { background:#FBFAF7; color:var(--ink-2); }
+  table.hd .n   { font-size:13px; font-weight:700; display:block; line-height:1.2; }
+  table.hd .shr { font-size:9.5px; font-weight:700; display:block; margin-top:1px; }
+  table.hd .per { font-size:9px; color:var(--muted); font-weight:600; display:block;
+    text-transform:uppercase; letter-spacing:0.04em; margin-top:1px; }
+
+  table.hdsc { width:100%; border-collapse:separate; border-spacing:0; font-size:10.5px;
+    background:#fff; border:1px solid var(--line); border-radius:6px; overflow:hidden; }
+  table.hdsc thead th { background:#F5F1EA; color:var(--ink-2); font-weight:700; font-size:9.5px;
+    padding:7px 8px; text-align:right; white-space:nowrap; letter-spacing:0.04em;
+    text-transform:uppercase; border-bottom:1px solid var(--line); position:sticky; top:0; z-index:2; }
+  table.hdsc thead th.left { text-align:left; }
+  table.hdsc tbody td { padding:5px 8px; text-align:right; border-bottom:1px solid #EFEBE4;
+    font-variant-numeric:tabular-nums; }
+  table.hdsc tbody td.left { text-align:left; }
+  table.hdsc tbody tr.grp td { background:#EEEAE0; font-weight:700; font-size:9.5px;
+    text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-2); padding:6px 8px;
+    border-top:2px solid var(--line); border-bottom:1px solid var(--line); text-align:left; }
+  table.hdsc tbody tr.grp td .cnt { float:right; font-weight:600; text-transform:none;
+    letter-spacing:0; color:var(--muted); }
+  table.hdsc tbody tr.zero td { background:#FDF6F4; }
+  table.hdsc tbody tr:hover td { background:rgba(0,0,0,0.035); }
+
+  table.sc { width:100%; border-collapse:collapse; font-size:10.5px; margin-top:6px; }  table.sc thead th { background:#F5F1EA; color:var(--ink-2); font-weight:600;
+    padding:6px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-size:10px; white-space:nowrap; letter-spacing:0.02em; }
+  table.sc thead th:first-child, table.sc thead th.left { text-align:left; }
+  table.sc tbody td { padding:5px 8px; text-align:right; border-bottom:1px solid var(--line);
+    font-variant-numeric:tabular-nums; }
+  table.sc tbody td.left { text-align:left; font-weight:500; }
+  table.sc tbody tr.good td { background:rgba(30,138,76,0.06); }
+  table.sc tbody tr.bad  td { background:rgba(180,58,42,0.06); }
+  table.sc tbody tr.sc-row { cursor:pointer; }
+  table.sc tbody tr.sc-row:hover td { background:rgba(0,0,0,0.03); }
+  table.sc tbody tr.sc-row.good:hover td { background:rgba(30,138,76,0.11); }
+  table.sc tbody tr.sc-row.bad:hover  td { background:rgba(180,58,42,0.11); }
+  table.sc tbody tr.group-hdr td { background:#EEEAE0; font-weight:700; font-size:10px;
+    text-transform:uppercase; letter-spacing:0.08em; color:var(--ink); padding:5px 8px;
+    border-bottom:1px solid var(--line-2); border-top:2px solid var(--line-2); }
+  table.sc tbody tr.group-hdr.good td { background:var(--green-soft); color:var(--green); }
+  table.sc tbody tr.group-hdr.bad  td { background:var(--red-soft); color:var(--red); }
+  table.sc tbody tr.group-hdr.mid  td { background:#F1ECE5; }
+  table.sc tbody tr.total-row td { background:#EEEAE0 !important; font-weight:700;
+    border-top:2px solid var(--line-2); font-size:11px; }
+  tr.sc-drill { display:none; }
+  tr.sc-drill.open { display:table-row; }
+  tr.sc-drill td { background:#FBF8F2 !important; padding:8px 12px 10px !important; }
+  .drill-inner { display:grid; gap:8px; }
+  .drill-inner.drill-4 { grid-template-columns:repeat(4,1fr); }
+  .drill-inner.drill-5 { grid-template-columns:repeat(5,1fr); }
+  .drill-label { font-size:9px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:5px; }
+  .pending-detail-tbl { width:auto; max-width:100%; border-collapse:collapse; background:#fff; margin:0; }
+  .pending-detail-tbl th { background:#F5F1EA; color:var(--ink); font-weight:600; font-size:10px;
+    text-align:left; padding:5px 10px; border-bottom:1px solid var(--line); }
+  .pending-detail-tbl td.detail-cell { padding:5px 10px; font-size:10.5px; border-bottom:1px solid #F0EAE0;
+    color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .pending-detail-tbl tr:last-child td { border-bottom:none; }
+  .drill-tile { background:#fff; border:1px solid var(--line); border-radius:3px; padding:6px 8px; font-size:10px; }
+  .drill-tile .dc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; margin-bottom:2px; }
+  .drill-tile .dv { font-size:11px; color:var(--ink-2); font-variant-numeric:tabular-nums; }
+  .drill-tile .dv b { color:var(--ink); }
+  .expand-hint { color:var(--muted); font-size:9px; margin-left:4px; }
+
+  .pill { display:inline-block; padding:1px 6px; border-radius:3px; font-size:10px; font-weight:600; }
+  .pill.good { background:var(--green-soft); color:var(--green); border:1px solid rgba(30,138,76,0.2); }
+  .pill.bad  { background:var(--red-soft); color:var(--red); border:1px solid rgba(180,58,42,0.2); }
+  .pill.mid  { background:#F1ECE5; color:var(--muted); border:1px solid var(--line); }
+  .trend { font-size:10px; font-weight:600; margin-left:3px; }
+  .trend.up  { color:var(--green); }
+  .trend.dn  { color:var(--red); }
+  .trend.flat { color:var(--muted); }
+
+  .off-strip { display:grid; grid-template-columns:repeat(4,1fr); gap:6px; margin-top:6px; }
+  .off-tile { padding:8px 10px; border-radius:3px; background:#FAFAF7; border:1px solid var(--line); }
+  .off-tile.alarm { background:var(--red-soft); border-color:rgba(180,58,42,0.2); }
+  .off-tile .oc { font-weight:600; font-size:10px; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em; }
+  .off-tile .op { font-size:15px; font-weight:700; margin:2px 0; letter-spacing:-0.01em; }
+  .off-tile .om { font-size:10px; color:var(--muted); }
+  .off-tile.alarm .op { color:var(--red); }
+
+  .footnote { margin-top:14px; padding:10px 12px; background:#FAFAF7;
+    border-left:3px solid var(--muted); font-size:10.5px; color:var(--ink-2); line-height:1.5; }
+</style></head><body>
+<div class="wrap">
+
+<header>
+  <div>
+    <h1>Solapur · City Sales Report</h1>
+    <div class="meta" style="font-size:11px; color:#3D3833; margin-top:2px;">
+      Aug MTD (Aug 1 – Aug 6, 2026) · LMTD: Jul 1 – Jul 6
+    </div>
+  </div>
+  <div class="meta" style="text-align:right;">
+    <div><b style="color:var(--ink); font-size:14px;">3 orders MTD</b> · target 4</div>
+    <div>Field Sales only</span></div></div>
+  </div>
+</header>
+
+
+
+<div class="callouts">
+  <div class="callout-title">Key alerts · MTD (Aug 1 – Aug 6, 2026) · Solapur Field Sales</div>
+  <div class="buckets-grid"><div class="bucket empty"><div class="bucket-lbl">1 · Lead sufficiency (BQL)</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket"><div class="bucket-lbl">2 · Funnel alerts (BQL → MS → MD → Order → HOTO)</div><ul><li class="bad">⚠ <b>MS → MD</b> 39.3% vs target 74.2% (-34.9pp)</li><li class="bad">⚠ <b>Order → HOTO</b> 0.0% vs target 70.7% (-70.7pp)</li></ul></div><div class="bucket"><div class="bucket-lbl">3 · HOTO TAT + Pending order ageing</div><ul><li class="bad">⚠ <b>33% of pending orders aged &gt;4 days</b> · 1 of 3</li></ul></div><div class="bucket empty"><div class="bucket-lbl">4 · AOV insights</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket"><div class="bucket-lbl">5 · SC-level performance (overall MD → Order)</div><ul><li class="good">✓ <b>ziyaul.shaikh</b> — 6 MDs, 16.7% conv (strong), recent 5d 0.0% ↓</li></ul></div><div class="bucket empty"><div class="bucket-lbl">6 · Offering alert · SC level (SSE Blue > 10% or GZ Uno > 20%)</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket empty"><div class="bucket-lbl">7 · kW conversion alert · SC level (≤ 3.24 kW < 20% or > 3.24 kW < 30%)</div><div class="bucket-empty">✓ No alerts</div></div><div class="bucket empty"><div class="bucket-lbl">8 · Lead score > 7 conversion · SC level (MD → Order)</div><div class="bucket-empty">✓ No alerts</div></div></div>
+</div>
+
+<div class="section-title">1 · BQL by channel · shortfall check</div>
+<div class="kpi-grid"><div class="kpi good">
+      <div class="label">Digital</div>
+      <div class="big num">157 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 150</span></div>
+      <div class="meta"><span class="pctd">104.7%</span> · Δ +7 · SD 25</div>
+    </div>
+<div class="kpi amber">
+      <div class="label">Referral</div>
+      <div class="big num">2 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 6</span></div>
+      <div class="meta"><span class="pctd">33.3%</span> · Δ -4 · SD 0</div>
+    </div>
+<div class="kpi good">
+      <div class="label">BTL</div>
+      <div class="big num">0 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 0</span></div>
+      <div class="meta"><span class="pctd">–</span> · Δ +0 · SD 0</div>
+    </div>
+<div class="kpi good">
+      <div class="label">SolarPro</div>
+      <div class="big num">0 <span style="font-size:10px; color:var(--muted); font-weight:500;">/ 0</span></div>
+      <div class="meta"><span class="pctd">–</span> · Δ +0 · SD 0</div>
+    </div></div>
+
+<div class="section-title">2 · Funnel conversion (Field Sales) · MTD + same-day vs target</div>
+<div class="funnel-grid"><div class="funnel-card amber">
+      <div class="stage">BQL → MS</div>
+      <div class="big num">17.6%</div>
+      <div class="meta">28 of 159 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">19.9% (-2.3pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Aug 6</span><span class="val">12.0% · 3/25 (-14.9pp)</span></div>
+    </div>
+<div class="funnel-card bad">
+      <div class="stage">MS → MD</div>
+      <div class="big num">39.3%</div>
+      <div class="meta">11 of 28 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">74.2% (-34.9pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Aug 6</span><span class="val">66.7% · 2/3 (-4.8pp)</span></div>
+    </div>
+<div class="funnel-card good">
+      <div class="stage">MD → Order</div>
+      <div class="big num">27.3%</div>
+      <div class="meta">3 of 11 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">17.4% (+9.9pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Aug 6</span><span class="val">0.0% · 0/2 (-20.0pp)</span></div>
+    </div>
+<div class="funnel-card bad">
+      <div class="stage">Order → HOTO</div>
+      <div class="big num">0.0%</div>
+      <div class="meta">0 of 3 MTD</div>
+      <div class="kpi-row"><span class="lbl">Target</span><span class="val">70.7% (-70.7pp)</span></div>
+      <div class="kpi-row"><span class="lbl">Aug 6</span><span class="val">– · 0/0 (–)</span></div>
+    </div></div>
+
+<div class="section-title">2a · Funnel conversion trends · daily · MTD vs LMTD vs Target</div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+  Daily conversion at each stage — <b>MTD</b> (solid blue) vs <b>LMTD</b> same June span (light blue) vs <b>Target</b> (amber dashed, from the July plan's daily stage ratios). Y-axis fixed 0–100%: days that genuinely exceed 100% are pinned at the top as ▲ triangles with the true value on hover. Gaps = zero volume in the denominator that day.
+</div>
+<div style="display:flex; gap:12px; margin:0 0 8px; align-items:flex-end; flex-wrap:wrap;">
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Channel<br>
+    <select id="ct2a-ch" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All channels</option>
+      <option>Digital</option><option>Referral</option><option>SolarPro</option><option>BTL</option><option>Others</option>
+    </select></label>
+  <div style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Lead score (multi)
+    <div id="ct2a-ls" style="display:flex; flex-wrap:wrap; gap:3px 10px; margin-top:4px; text-transform:none; letter-spacing:0; font-weight:400; max-width:230px;">
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="__ALL__" checked style="margin:0; cursor:pointer;"> All</label>
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="0-2" style="margin:0; cursor:pointer;"> 0-2</label>
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="2-5" style="margin:0; cursor:pointer;"> 2-5</label>
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="5-7" style="margin:0; cursor:pointer;"> 5-7</label>
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="7-9" style="margin:0; cursor:pointer;"> 7-9</label>
+      <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="9-10" style="margin:0; cursor:pointer;"> 9-10</label>
+    </div>
+  </div>
+  <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">kW (MD→Ord &amp; Ord→HOTO)<br>
+    <select id="ct2a-kw" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+      <option value="__ALL__" selected>All kW buckets</option>
+      <option>≤3.24 kW</option><option>3.24–5.4 kW</option><option>&gt;5.4 kW</option><option>Unknown</option>
+    </select></label>
+  <div style="display:flex; gap:6px; margin-left:auto;">
+    <button id="ct2a-conv-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-conv-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div style="font-size:10px; color:var(--muted); margin:-4px 0 8px;">Channel &amp; lead-score filters apply to all five charts; kW applies to MD→Order and Order→HOTO only. Target curve shows only when all three filters are at "All" (the plan has no lead-score/kW splits).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:14px;">
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-bqlms"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-msmd"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-mdord"></canvas></div></div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:220px;"><canvas id="ct2a-ordhoto"></canvas></div></div>
+</div>
+<div id="ct2a-sc-insights" style="margin-top:12px; display:grid; grid-template-columns:1fr 1fr; gap:14px;"></div>
+<details style="margin-top:10px; border:1px solid var(--line); border-radius:6px; background:#fafafa;">
+  <summary style="cursor:pointer; padding:9px 13px; font-size:11.5px; font-weight:700; color:var(--ink); user-select:none;">How is the SC contribution calculated? &nbsp;<span style="font-weight:400; color:var(--muted);">(click to expand)</span></summary>
+  <div style="padding:2px 15px 13px; font-size:10.5px; line-height:1.6; color:var(--ink-2);">
+    <p style="margin:6px 0;"><b>What it answers.</b> The city has one blended MD&#8594;Order conversion (total orders &divide; total MDs across all SCs in the window). This tells you <i>which reps are moving that city number down, and which are holding it up</i> &mdash; not simply who has low conversion, but who is shifting the city average, which depends on both how far off a rep's conversion is <i>and</i> how much volume they carry.</p>
+    <p style="margin:6px 0;"><b>The calculation.</b> For each SC in the window we take <code>n</code> = their orders and <code>d</code> = their MDs, then:</p>
+    <div style="margin:4px 0 4px 10px;">
+      <div style="margin-bottom:3px;">1. City blend: <code>blend = (&Sigma; orders) / (&Sigma; MDs) &times; 100</code></div>
+      <div style="margin-bottom:3px;">2. Each SC's contribution: <code>(d / totalMDs) &times; (n/d&times;100 &minus; blend)</code></div>
+    </div>
+    <p style="margin:6px 0;">The second factor <code>(n/d&times;100 &minus; blend)</code> is how far the SC's own conversion sits above/below the city, in percentage points. The first factor <code>(d / totalMDs)</code> is the SC's share of the city's meetings &mdash; their weight. Multiplied, it gives that SC's contribution to the city conversion, <b>in pp</b>. A rep converting 5pp below the city who did 30% of all meetings pulls harder than one converting 20pp below on just 2 meetings.</p>
+    <p style="margin:6px 0;"><b>Property.</b> These contributions sum to zero across all SCs, so they exactly decompose the gap between the city and an "everyone at the average" world &mdash; they're additive and honest.</p>
+    <p style="margin:6px 0;"><b>How to read a line.</b> "<b style="color:var(--red);">sachin.kale &minus;1.2pp</b>" under same-day MD&#8594;Order means: given how many meetings they did that day and how poorly they converted relative to the city, they alone dragged the city's same-day conversion down ~1.2pp &mdash; if they'd merely converted at the city average, the city number would be ~1.2pp higher. A green "<b style="color:var(--green);">rohit.raut +2.2pp</b>" is the reverse: high volume and/or well-above-average conversion, lifting the city.</p>
+    <p style="margin:6px 0;"><b>Guardrails.</b> A rep needs a minimum number of MDs to appear (3 for the 5-day window, 1 for same-day, since few meetings land in one day), so a single fluky meeting can't dominate; contributions under &plusmn;0.02pp are dropped as noise.</p>
+    <p style="margin:6px 0 2px;"><b>Order&#8594;HOTO</b> uses the identical method with HOTO as numerator and orders as denominator. Note: on a single day HOTOs can come from orders booked earlier, so the same-day Order&#8594;HOTO blend can read above 100% &mdash; the contributions still correctly rank who is above/below that blend.</p>
+  </div>
+</details>
+<div style="margin-top:18px;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:2px;">SC bubble · MD→Order conversion vs orders (MTD · cohort view)</div>
+  <div style="font-size:10px; color:var(--muted); margin-bottom:8px;">One bubble per SC. X = orders booked, Y = MD→Order conversion %, bubble size = meetings done. Hover or tap a bubble for full detail. FS+Insta, attributed to Current SC. SCs with 0 MDs are omitted. <b>Cohort view</b> — only leads whose meeting and order both fall in the current month are counted (chained per lead), so conversion never exceeds 100%. The filters below apply to this chart only, and the X-axis rescales to the filtered order volume.</div>
+  <div style="display:flex; gap:16px; align-items:flex-end; flex-wrap:wrap; margin-bottom:8px;">
+    <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Channel<br>
+      <select id="ctb-ch" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;">
+        <option value="__ALL__" selected>All channels</option>
+        <option>Digital</option><option>Referral</option><option>SolarPro</option><option>BTL</option><option>Others</option>
+      </select></label>
+    <div style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">Lead score (multi)
+      <div id="ctb-ls" style="display:flex; flex-wrap:wrap; gap:3px 10px; margin-top:4px; text-transform:none; letter-spacing:0; font-weight:400; max-width:230px;">
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="__ALL__" checked style="margin:0; cursor:pointer;"> All</label>
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="0-2" style="margin:0; cursor:pointer;"> 0-2</label>
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="2-5" style="margin:0; cursor:pointer;"> 2-5</label>
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="5-7" style="margin:0; cursor:pointer;"> 5-7</label>
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="7-9" style="margin:0; cursor:pointer;"> 7-9</label>
+        <label style="display:inline-flex; align-items:center; gap:3px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="9-10" style="margin:0; cursor:pointer;"> 9-10</label>
+      </div>
+    </div>
+  </div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:420px;"><canvas id="ct2a-sc-bubble"></canvas></div></div>
+</div>
+<div style="margin-top:18px;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:2px;">SC bubble · Order→HOTO conversion vs HOTOs (MTD · cohort view)</div>
+  <div style="font-size:10px; color:var(--muted); margin-bottom:8px;">One bubble per SC. X = HOTOs done, Y = Order → HOTO conversion %, bubble size = orders booked. Hover or tap a bubble for full detail. FS+Insta, attributed to Current SC. SCs with 0 orders are omitted. <b>Cohort view</b> — only leads whose meeting, order and HOTO all fall in the current month are counted (chained per lead), so conversion never exceeds 100%. This chart uses the same Channel &amp; Lead-score filters above; the X-axis rescales to the filtered HOTO volume.</div>
+  <div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:420px;"><canvas id="ct2a-sc-bubble2"></canvas></div></div>
+</div>
+<div style="display:flex; align-items:center; gap:12px; margin:16px 0 8px; flex-wrap:wrap;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink);">Trend · MTD vs LMTD vs Target</div>
+  <div style="display:flex; gap:5px;">
+    <button id="ct2a-trend-md"  type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">MD</button>
+    <button id="ct2a-trend-ord" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Order</button>
+    <button id="ct2a-trend-hoto" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">HOTO</button>
+  </div>
+  <div style="margin-left:auto; display:flex; gap:6px;">
+    <button id="ct2a-ord-daily" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--blue); background:var(--blue); color:#fff; border-radius:4px; cursor:pointer;">Daily</button>
+    <button id="ct2a-ord-cum" type="button" style="padding:4px 12px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">Cumulative</button>
+  </div>
+</div>
+<div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:240px;"><canvas id="ct2a-order"></canvas></div></div>
+
+<div style="margin-top:22px;">
+  <div style="font-size:12px; font-weight:700; color:var(--ink); margin-bottom:2px;">SC HOTO-count distribution · MTD vs LMTD</div>
+  <div style="font-size:10px; color:var(--muted); margin-bottom:8px; line-height:1.5;">
+    SCs bucketed by how many HOTOs they closed in the selected window (FS+Insta, attributed to Current SC). Buckets are upper-inclusive: <b>0–4</b> = 1–4 HOTOs, <b>4–8</b> = 5–8, … <b>20+</b> = 21 or more. Share % is row-wise across the six buckets. The LMTD row uses the same day-range in Jul. Share colouring compares MTD against LMTD — <span style="color:#1E8A4C; font-weight:700;">green</span> if MTD share is higher, <span style="color:#B97400; font-weight:700;">amber</span> if flat, <span style="color:#B43A2A; font-weight:700;">red</span> if lower.
+  </div>
+  <div style="display:flex; gap:14px; align-items:flex-end; flex-wrap:wrap; margin-bottom:8px;">
+    <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">From<br>
+      <input type="date" id="hd-from" min="2026-08-01" max="2026-08-06" value="2026-08-01" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;"></label>
+    <label style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">To<br>
+      <input type="date" id="hd-to" min="2026-08-01" max="2026-08-06" value="2026-08-06" style="margin-top:3px; padding:3px 6px; border:1px solid var(--line); border-radius:3px; font-size:10.5px; font-family:inherit;"></label>
+    <button id="hd-toggle" type="button" style="padding:5px 14px; font-size:10.5px; font-weight:700; border:1px solid var(--line); background:#fff; color:var(--ink-2); border-radius:4px; cursor:pointer;">▸ Detailed view</button>
+  </div>
+  <div style="margin-bottom:8px;">
+    <span style="font-size:10px; text-transform:uppercase; font-weight:700; letter-spacing:0.06em; color:var(--muted);">SC tenure (multi)</span>
+    <div id="hd-ten" style="display:flex; flex-wrap:wrap; gap:4px 14px; margin-top:4px; align-items:center;">
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="__ALL__" checked style="margin:0; cursor:pointer;"> All</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="0" style="margin:0; cursor:pointer;"> &lt;60d</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="1" style="margin:0; cursor:pointer;"> 60–180d</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="2" style="margin:0; cursor:pointer;"> 180–360d</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="3" style="margin:0; cursor:pointer;"> &gt;360d</label>
+      <label style="display:inline-flex; align-items:center; gap:4px; font-size:10.5px; cursor:pointer;"><input type="checkbox" value="4" style="margin:0; cursor:pointer;"> No tenure</label>
+    </div>
+  </div>
+  <div class="table-wrap" style="overflow-x:auto;">
+    <table class="hd" id="hd-table">
+      <thead><tr>
+        <th class="left">Period</th>
+        <th>0–4</th><th>4–8</th><th>8–12</th><th>12–16</th><th>16–20</th><th>20+</th><th class="tot">Total SC</th>
+      </tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+  <div id="hd-detail" style="display:none; margin-top:16px;">
+    <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Distribution of HOTOs per SC</div>
+    <div style="display:flex; gap:12px; flex-wrap:wrap;">
+      <div style="flex:1 1 300px; min-width:280px;"><div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:250px;"><canvas id="hd-chart-m"></canvas></div></div></div>
+      <div style="flex:1 1 300px; min-width:280px;"><div class="chart-card" style="background:#fff; border:1px solid var(--line); border-radius:6px; padding:10px;"><div style="width:100%; height:250px;"><canvas id="hd-chart-l"></canvas></div></div></div>
+    </div>
+    <div style="font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:0.05em; margin:16px 0 6px;">SC-level HOTO counts by bucket</div>
+    <div class="table-wrap" style="overflow-x:auto; max-height:440px; overflow-y:auto; border:1px solid var(--line); border-radius:6px;">
+      <table class="hdsc" id="hd-sc-table" style="border:none; border-radius:0;">
+        <thead><tr>
+          <th class="left">SC email</th><th class="left">Status</th><th class="left">Designation</th><th class="left">Tenure</th><th>MTD HOTO</th><th>LMTD HOTO</th><th>Δ (MTD−LMTD)</th>
+        </tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section-title">2b · On-spot conversion (Field Sales) · order booked same day as the meeting</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>MTD (Aug 1 – Aug 6)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink); font-variant-numeric:tabular-nums;">66.7%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">2 on-spot / 3 total FS orders</div>
+    <div style="font-size:11px; margin-top:4px; font-weight:700; color:var(--green);">+16.7pp vs LMTD</div>
+  </div>
+  <div class="side-card">
+    <h4>LMTD (Jul 1 – Jul 6)</h4>
+    <div style="font-size:24px; font-weight:700; color:var(--ink-2); font-variant-numeric:tabular-nums;">50.0%</div>
+    <div style="font-size:11px; color:var(--muted); margin-top:2px;">2 on-spot / 4 total FS orders</div>
+  </div>
+</div>
+<div style="font-size:10.5px; color:var(--muted); margin:4px 0 0; line-height:1.5;">On-spot = the lead's meeting-done date equals its order date. Denominator = all FS orders in the period.</div>
+
+<div class="section-title">3 · Channel BQL → MD &amp; MD → Order conversion · MTD (all channels)</div>
+<div class="chan-strip"><div class="chan-tile short">
+      <span class="ch">Digital</span> BQL→MD: 10/157 = <b>6.4%</b> · tgt 14.7% (-8.4pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 2/10 = <b>20.0%</b>
+    </div>
+<div class="chan-tile over">
+      <span class="ch">Referral</span> BQL→MD: 1/2 = <b>50.0%</b> · tgt 14.7% (+35.3pp)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 1/1 = <b>100.0%</b>
+    </div>
+<div class="chan-tile ">
+      <span class="ch">BTL</span> BQL→MD: 0/0 = <b>–</b> · tgt 14.7% (–)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 0/0 = <b>–</b>
+    </div>
+<div class="chan-tile ">
+      <span class="ch">SolarPro</span> BQL→MD: 0/0 = <b>–</b> · tgt 14.7% (–)<br>
+      <span style="color:var(--muted);">MD→Order:</span> 0/0 = <b>–</b>
+    </div></div>
+
+<div class="section-title">4 · Order → HOTO TAT · 5 · Pending order ageing</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Order → HOTO TAT (Field Sales · MTD)</h4>
+    <div class="metric-note">No completed Field Sales Order → HOTO pairs in MTD.</div>
+  </div>
+  <div class="side-card">
+    <h4>Pending FS orders ageing (Aug only · not converted to HOTO)</h4>
+    
+<div style="font-size:11px; color:var(--muted); margin-bottom:4px;">
+  Total FS orders in June: <b style="color:var(--ink);">3</b>
+  = handed over <b style="color:var(--green);">0</b>
+  + placed today, no HOTO yet <b style="color:var(--muted);">0</b>
+  + <b style="color:var(--red);">pending 1+ day: 3</b>
+  <span style="color:var(--muted);">(of which aged &gt;4d: <b style="color:var(--red);">1</b>)</span>
+</div>
+<div class="ageing-grid"><div class="ageing-tile ">
+      <div class="b-label">1-2 days</div>
+      <div class="b-count num">2</div>
+      <div class="b-pct">67%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">2-3 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile ">
+      <div class="b-label">3-4 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile mid">
+      <div class="b-label">4-6 days</div>
+      <div class="b-count num">1</div>
+      <div class="b-pct">33%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">6-10 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div><div class="ageing-tile high">
+      <div class="b-label">>10 days</div>
+      <div class="b-count num">0</div>
+      <div class="b-pct">0%</div>
+    </div></div>
+
+  </div>
+</div>
+
+<div class="section-title">6 · AOV and offering share</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>Average Order Value</h4>
+    
+<div class="big-metric good">₹303k
+  <span style="font-size:14px; color:var(--muted); font-weight:600;">MTD</span>
+  <span class="trend-chip dn">↑ +5.0% vs LMTD</span>
+</div>
+<div class="metric-note">LMTD AOV was ₹288k · Δ ₹+14k
+  · based on 3 MTD orders / 4 LMTD orders.</div>
+  </div>
+  <div class="side-card">
+    <h4>Offering share (MTD vs LMTD)</h4>
+    <div class="off-strip"><div class="off-tile ">
+      <div class="oc">GoodZero</div>
+      <div class="op">100.0%</div>
+      <div class="om">LMTD 75.0% · Δ ↑ +25.0pp · intra-MTD +0.0pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">GoodZero Pro</div>
+      <div class="op">0.0%</div>
+      <div class="om">LMTD 0.0% · Δ → +0.0pp · intra-MTD +0.0pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">GoodZero Uno</div>
+      <div class="op">0.0%</div>
+      <div class="om">LMTD 0.0% · Δ → +0.0pp · intra-MTD +0.0pp</div>
+    </div>
+<div class="off-tile ">
+      <div class="oc">SSE Blue</div>
+      <div class="op">0.0%</div>
+      <div class="om">LMTD 25.0% · Δ ↓ -25.0pp · intra-MTD +0.0pp</div>
+    </div></div>
+  </div>
+</div>
+
+<div class="section-title">7 · Overall kW-bucket & Lead-score conversion · MD → Order (Solapur FS · MTD)</div>
+<div class="side-grid">
+  <div class="side-card">
+    <h4>kW-bucket conversion</h4>
+    
+<div class="big-metric bad">27.3%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall MD → Order</span>
+</div>
+<div class="metric-note">3 orders from 11 MDs (FS · June).</div>
+<div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px;">
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--bad);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">≤ 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--bad);">11.1%</div>
+    <div style="font-size:10px; color:var(--muted);">1/9 MDs · 82% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 20%</div>
+  </div>
+  <div style="padding:9px 10px; background:#fff; border:1px solid var(--line); border-radius:3px; border-left:3px solid var(--good);">
+    <div style="font-size:10px; font-weight:700; color:var(--ink); text-transform:uppercase; letter-spacing:0.04em;">&gt; 3.24 kW</div>
+    <div style="font-size:18px; font-weight:700; letter-spacing:-0.01em; margin-top:2px; color:var(--good);">100.0%</div>
+    <div style="font-size:10px; color:var(--muted);">2/2 MDs · 18% of MD volume</div>
+    <div style="font-size:9px; color:var(--muted); margin-top:2px;">threshold: ≥ 30%</div>
+  </div>
+</div>
+  </div>
+  <div class="side-card">
+    <h4>Lead score &gt; 7 conversion</h4>
+    
+<div class="big-metric bad">25.0%
+  <span style="font-size:13px; color:var(--muted); font-weight:600;">overall</span>
+</div>
+<div class="metric-note">1 orders from 4 lead-score &gt;7 MDs (FS · June).
+  Overall MD→Order = 27.3% · <b>2.3pp lower</b> than overall.</div>
+<div style="font-size:9px; color:var(--muted); font-weight:700; margin-top:10px; text-transform:uppercase; letter-spacing:0.05em;">By source · lead-score &gt;7 MDs → orders</div>
+<div style="display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-top:4px;">
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Digital</div>
+        <div style="font-size:14px; font-weight:700; color:var(--bad); margin-top:1px;">0.0%</div>
+        <div style="font-size:9px; color:var(--muted);">0/3</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">Referral</div>
+        <div style="font-size:14px; font-weight:700; color:var(--good); margin-top:1px;">100.0%</div>
+        <div style="font-size:9px; color:var(--muted);">1/1</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">BTL</div>
+        <div style="font-size:14px; font-weight:700; color:var(--muted); margin-top:1px;">–</div>
+        <div style="font-size:9px; color:var(--muted);">0/0</div>
+      </div>
+      <div style="padding:6px 8px; background:#fff; border:1px solid var(--line); border-radius:3px; text-align:center;">
+        <div style="font-size:9px; color:var(--muted); font-weight:700; text-transform:uppercase; letter-spacing:0.04em;">SolarPro</div>
+        <div style="font-size:14px; font-weight:700; color:var(--muted); margin-top:1px;">–</div>
+        <div style="font-size:9px; color:var(--muted);">0/0</div>
+      </div></div>
+  </div>
+</div>
+
+<div class="section-title">8 · SC-level view · MD → Order productivity (Solapur · ≥ 5 MDs MTD) <span class="expand-hint">click any row for channel + lead-score breakdown</span></div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">SC (email prefix)</th>
+    <th>SC Index (Bucket)</th>
+    <th>MDs MTD</th><th>Ord MTD</th><th>Conv MTD</th><th>On-spot</th>
+    <th>MDs 5d</th><th>Ord 5d</th><th>Conv 5d</th>
+    <th>MDs SD</th><th>Ord SD</th>
+    <th>Status</th>
+  </tr></thead>
+  <tbody><tr class="group-hdr good"><td colspan="12">Good performers · top-quartile conversion (double down) · 1 SCs</td></tr><tr class="sc-row good" data-sc="ziyaul.shaikh@solarsquare.in">
+      <td class="left">ziyaul.shaikh <span style="font-size:9px; color:var(--muted);">▸</span></td>
+      <td><span style="color:var(--muted);">NA</span></td>
+      <td>6</td><td>1</td><td>16.7%</td><td>100.0% <span style="color:var(--muted); font-size:10px;">(1/1)</span></td>
+      <td>4</td><td>0</td><td>0.0% <span class="trend dn">-16.7</span></td>
+      <td>2</td><td>0</td>
+      <td><span class="pill good">GOOD</span></td>
+    </tr>
+    <tr class="sc-drill" data-sc="ziyaul.shaikh@solarsquare.in"><td colspan="12"><div class="drill-label">By channel</div><div class="drill-inner drill-4"><div class="drill-tile"><div class="dc">Digital</div><div class="dv">MD <b>6</b> · Ord <b>1</b> · Conv <b>16.7%</b></div></div><div class="drill-tile"><div class="dc">Referral</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">BTL</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">SolarPro</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div><div class="drill-label" style="margin-top:8px;">By lead score bucket</div><div class="drill-inner drill-5"><div class="drill-tile"><div class="dc">Score 0-2</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div><div class="drill-tile"><div class="dc">Score 2-5</div><div class="dv">MD <b>3</b> · Ord <b>1</b> · Conv <b>33.3%</b></div></div><div class="drill-tile"><div class="dc">Score 5-7</div><div class="dv">MD <b>1</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 7-9</div><div class="dv">MD <b>2</b> · Ord <b>0</b> · Conv <b>0.0%</b></div></div><div class="drill-tile"><div class="dc">Score 9-10</div><div class="dv" style="color:var(--muted); font-style:italic;">N/A</div></div></div></td></tr></tbody>
+</table>
+
+<div class="section-title">9 · Pending order ageing by SC · Solapur FS <span class="expand-hint">click any row to see order-level detail</span></div>
+<table class="sc">
+      <thead><tr>
+        <th class="left">SC (email prefix)</th>
+        <th>SC Index (Bucket)</th>
+        <th>Pending orders</th>
+        <th>HOTO MTD</th>
+        <th>Oldest (days)</th>
+        <th>Newest (days)</th>
+        <th>Avg age (days)</th>
+        <th>&gt; 4 days</th>
+        <th>&gt; 10 days</th>
+      </tr></thead>
+      <tbody><tr class="sc-row " data-sc="noorahemad.khalifa@solarsquare.in">
+          <td class="left">noorahemad.khalifa <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><span style="color:var(--muted);">NA</span></td>
+          <td><b>2</b></td>
+          <td>0</td>
+          <td>2</td>
+          <td>1</td>
+          <td>1.5</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="noorahemad.khalifa@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (2) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">RMH55284</td><td class="detail-cell">Aug 4, 2026</td><td class="detail-cell"><b>2</b> days</td></tr><tr><td class="detail-cell">LMH173527</td><td class="detail-cell">Aug 5, 2026</td><td class="detail-cell"><b>1</b> day</td></tr></tbody>
+          </table>
+        </td></tr><tr class="sc-row mid" data-sc="ziyaul.shaikh@solarsquare.in">
+          <td class="left">ziyaul.shaikh <span style="font-size:9px; color:var(--muted);">▸</span></td>
+          <td><span style="color:var(--muted);">NA</span></td>
+          <td><b>1</b></td>
+          <td>0</td>
+          <td>5</td>
+          <td>5</td>
+          <td>5.0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr class="sc-drill" data-sc="ziyaul.shaikh@solarsquare.in"><td colspan="9">
+          <div class="drill-label">Pending orders (1) · oldest first</div>
+          <table class="pending-detail-tbl">
+            <thead><tr><th>Lead ID</th><th>Order date</th><th>Days pending</th></tr></thead>
+            <tbody><tr><td class="detail-cell">LMH224952</td><td class="detail-cell">Aug 1, 2026</td><td class="detail-cell"><b>5</b> days</td></tr></tbody>
+          </table>
+        </td></tr>
+        <tr style="background:#f3f4f6; border-top:2px solid #9ca3af; font-weight:700;">
+          <td class="left">Total (2 SCs)</td>
+          <td></td>
+          <td><b>3</b></td>
+          <td></td><td></td><td></td><td></td><td></td><td></td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="margin-top:6px; font-size:10.5px; color:var(--muted); line-height:1.5;">
+      FS orders placed in the current month (Aug 1-6) that have not yet reached HOTO. Rows highlighted red = at least one order aged &gt; 10 days; amber = at least one aged &gt; 4 days. Sorted by (&gt; 10-day count, then oldest, then total pending) descending. Click a row to see order-level detail: Lead ID · Order date · Days pending.
+    </div>
+
+<div class="section-title">10 · Cancellation + on-hold by SC · June orders</div>
+<div style="padding:12px; color:var(--muted); font-style:italic;">No cancellation or on-hold orders in June.</div>
+
+
+
+
+<div class="section-title">12 · HOTO mismatch · welcome-call coverage &amp; mismatch (MTD)</div>
+<div style="padding:12px; color:var(--muted); font-style:italic;">No HOTOs done in MTD for Solapur.</div>
+
+
+<div class="section-title">13 · TL view · team performance (Solapur) <span class="expand-hint">click any TL row to see their SCs and their own leads</span></div>
+<div style="font-size:10.5px; color:var(--muted); margin-bottom:8px; line-height:1.55;">
+  Each row is a Team Leader’s <b>combined</b> MTD performance — the sum of every SC tagged to them in the manpower sheet <b>plus the TL’s own leads</b>.
+  Conversion bands: MD→Order red &lt;15%, amber 15–30%, green &gt;30%. Order→HOTO red &lt;70%, amber 70–90%, green &gt;90%.
+  The final column splits the combined MD between team and the TL’s own. Click a row to expand.
+</div>
+<table class="sc">
+  <thead><tr>
+    <th class="left">Team Leader</th><th>SCs</th>
+    <th>MD MTD</th><th>Order MTD</th><th>MD→Ord %</th><th>HOTO MTD</th><th>Ord→HOTO %</th>
+    <th>MD team / own</th>
+  </tr></thead>
+  <tbody><tr class="tl-row" data-tl="0" style="cursor:pointer;">
+      <td class="left"><span class="tl-caret" style="display:inline-block; width:11px; color:var(--muted);">▸</span> <b>sohel.nadaf</b>
+        <span class="muted" style="font-size:9.5px;"> · TL · 187d</span></td>
+      <td>3</td>
+      <td>11</td><td>3</td><td style="font-weight:700; color:#B97400;">27.3%</td><td>0</td><td style="font-weight:700; color:#B43A2A;">0.0%</td>
+      <td class="muted" style="font-size:10px;">11 / 0</td>
+    </tr><tr class="tl-detail" data-for="0" style="display:none;"><td colspan="8" style="padding:0; background:var(--bg);">
+      <table class="sc" style="margin:0; width:100%;">
+        <thead><tr><th class="left">SC under sohel.nadaf</th><th>SCs</th><th>MD MTD</th><th>Order MTD</th><th>MD→Ord</th><th>HOTO MTD</th><th>Ord→HOTO</th><th></th></tr></thead>
+        <tbody><tr><td class="left" style="padding-left:24px;"><b>sohel.nadaf</b>
+              <span class="muted" style="font-size:9.5px;"> · own leads counted under None</span></td>
+            <td class="muted">–</td><td class="muted">–</td><td class="muted">–</td><td class="muted">–</td><td class="muted">–</td><td class="muted">–</td><td></td></tr><tr><td class="left" style="padding-left:24px;">ziyaul.shaikh
+            <span class="muted" style="font-size:9.5px;"> · SC · 125d · </span><span style="font-size:9.5px; color:#1E8A4C; font-weight:600;">Active</span></td>
+          <td class="muted">–</td><td>6</td><td>1</td><td style="font-weight:700; color:#B97400;">16.7%</td><td>0</td><td style="font-weight:700; color:#B43A2A;">0.0%</td><td></td></tr><tr><td class="left" style="padding-left:24px;">rajkumar.sai
+            <span class="muted" style="font-size:9.5px;"> · Sr SC · 115d · </span><span style="font-size:9.5px; color:#1E8A4C; font-weight:600;">Active</span></td>
+          <td class="muted">–</td><td>3</td><td>0</td><td style="font-weight:700; color:#B43A2A;">0.0%</td><td>0</td><td class="muted">–</td><td></td></tr><tr><td class="left" style="padding-left:24px;">noorahemad.khalifa
+            <span class="muted" style="font-size:9.5px;"> · SC · 173d · </span><span style="font-size:9.5px; color:#1E8A4C; font-weight:600;">Active</span></td>
+          <td class="muted">–</td><td>2</td><td>2</td><td style="font-weight:700; color:#1E8A4C;">100.0%</td><td>0</td><td style="font-weight:700; color:#B43A2A;">0.0%</td><td></td></tr></tbody>
+      </table></td></tr>
+    <tr style="background:#f3f4f6; border-top:2px solid #9ca3af; font-weight:700;">
+      <td class="left">Total (1 TLs)</td><td>3</td>
+      <td>11</td><td>3</td><td style="font-weight:700; color:#B97400;">27.3%</td><td>0</td><td style="font-weight:700; color:#B43A2A;">0.0%</td>
+      <td class="muted" style="font-size:10px;">11 / 0</td>
+    </tr>
+  </tbody>
+</table>
+<script>
+(function(){
+  document.querySelectorAll('.tl-row').forEach(function(tr){
+    tr.addEventListener('click', function(){
+      var id = tr.getAttribute('data-tl');
+      var d = document.querySelector('.tl-detail[data-for="' + id + '"]');
+      if (!d) return;
+      var open = d.style.display !== 'none';
+      d.style.display = open ? 'none' : '';
+      var c = tr.querySelector('.tl-caret');
+      if (c) c.textContent = open ? '\u25b8' : '\u25be';
+    });
+  });
+})();
+</script>
+
+<div class="footnote">
+  <b>Reading the SC table.</b> Rows grouped by MTD conversion into GOOD (top quartile), MID, and BAD (bottom quartile — coaching candidates). Trend arrow compares recent 5-day (Aug 1 – Aug 6, 2026) conversion to MTD baseline; ↑ improving, ↓ worsening. <b>On-spot</b> = share of an SC's MTD orders where the MD and Order happened the same day, formatted as % (on-spot orders / total MTD orders). Click any SC row to expand and see MD → Order performance broken out both by channel (Digital / Referral / BTL / SolarPro) and by lead-score bucket (cohort view: MDs done in the current month and orders from those MDs, bucketed 0-2, 2-5, 5-7, 7-9, 9-10). Filter: min 5 MDs MTD.
+</div>
+
+</div>
+
+<script>
+document.querySelectorAll('table.sc tbody tr.sc-row').forEach(function(row){
+  row.addEventListener('click', function(){
+    var sc = row.dataset.sc;
+    var tbody = row.closest('tbody');
+    if (!tbody) return;
+    var drill = tbody.querySelector('tr.sc-drill[data-sc="' + sc + '"]');
+    if (drill) drill.classList.toggle('open');
+  });
+});
+</script>
+
+
+<script>
+(function() {
+  if (typeof Chart === 'undefined') return;   // offline fallback: charts skipped gracefully
+  const T = {"mtd":{"bql":[29,40,18,22,25,25],"ms":[6,7,1,1,10,3],"md":[3,3,0,1,2,2],"ord":[1,0,0,1,1,0],"hoto":[0,0,0,0,0,0]},"lmtd":{"bql":[20,21,30,26,6,15],"ms":[0,8,11,6,8,0],"md":[1,6,8,3,5,0],"ord":[1,0,2,1,0,0],"hoto":[0,0,0,1,2,0]},"tgt":{"bql":[26.0,26.0,26.0,26.0,26.0,26.0],"ms":[0.0,10.0,0.0,7.0,7.0,7.0],"md":[0.0,8.0,0.0,5.0,5.0,5.0],"ord":[0.0,1.0,0.0,1.0,1.0,1.0],"hoto":[0.4714285714285714,0.4714285714285714,0.4714285714285714,0.4714285714285714,0.4714285714285714,0.4714285714285714]},"slice":{"bql":{"m":[[1,0,5,3,17],[1,0,1,3,5],[1,0,2,3,4],[1,0,3,3,3],[2,0,2,3,4],[2,0,5,3,24],[2,0,3,3,4],[2,0,1,3,7],[2,1,5,3,1],[3,0,5,3,15],[3,0,1,3,1],[3,0,2,3,1],[3,0,3,3,1],[4,0,5,3,16],[4,0,2,3,3],[4,0,3,3,1],[4,0,1,3,1],[4,1,4,3,1],[5,0,5,3,20],[5,0,3,3,1],[5,0,1,3,3],[5,0,2,3,1],[6,0,5,3,20],[6,0,1,3,3],[6,0,3,3,2]],"l":[[1,0,5,3,13],[1,0,2,3,4],[1,0,1,3,2],[1,0,3,3,1],[2,0,1,3,5],[2,0,5,3,12],[2,0,2,3,3],[2,1,3,3,1],[3,0,0,3,1],[3,0,1,3,5],[3,0,5,3,19],[3,0,2,3,3],[3,1,4,3,2],[4,0,5,3,12],[4,0,3,3,2],[4,0,1,3,6],[4,0,2,3,6],[5,0,5,3,5],[5,0,1,3,1],[6,0,5,3,12],[6,0,3,3,2],[6,0,2,3,1]]},"ms":{"m":[[2,0,1,3,3],[2,0,3,3,1],[5,0,1,3,3],[1,0,3,0,1],[1,0,2,0,1],[1,0,1,0,2],[2,0,3,0,1],[1,0,2,3,1],[3,0,2,3,1],[1,0,3,3,1],[2,0,1,1,1],[2,0,2,0,1],[4,0,1,3,1],[5,0,2,3,2],[5,0,1,0,1],[5,0,3,0,1],[5,0,3,3,1],[6,0,1,0,1],[6,0,1,3,2],[5,1,1,3,1],[5,1,4,1,1]],"l":[[4,0,1,0,3],[3,0,3,3,1],[2,0,2,3,2],[2,0,3,3,1],[2,0,3,0,2],[4,0,2,0,1],[3,0,2,3,3],[2,0,2,0,2],[5,0,1,3,2],[4,0,0,1,1],[3,0,2,0,1],[5,0,2,0,3],[3,0,1,0,2],[5,0,2,3,1],[4,0,2,3,1],[5,0,1,0,1],[5,0,2,1,1],[3,1,3,3,1],[3,1,2,0,1],[2,1,3,3,1],[3,1,4,3,1],[3,1,4,0,1]]},"md":{"m":[[5,0,1,3,1],[1,0,3,0,1],[1,0,1,0,2],[2,0,3,0,1],[2,0,1,1,1],[2,0,2,0,1],[5,0,2,3,1],[6,0,3,0,1],[6,0,1,0,1],[4,1,4,1,1]],"l":[[1,0,3,0,1],[3,0,1,3,1],[2,0,3,0,2],[4,0,2,0,1],[2,0,2,0,3],[3,0,2,3,2],[3,0,2,0,1],[5,0,2,0,2],[3,0,1,0,2],[4,0,1,0,1],[5,0,1,0,2],[5,0,2,1,1],[3,1,2,0,1],[2,1,3,3,1],[4,1,4,3,1],[3,1,4,0,1]]},"ord":{"m":[[5,0,2,1,1],[1,0,1,0,1],[4,1,4,1,1]],"l":[[4,0,2,1,1],[1,0,1,0,1],[3,0,2,0,1],[3,1,4,0,1]]},"hoto":{"m":[],"l":[[4,0,2,1,1],[5,0,1,0,1],[5,1,4,0,1]]}},"sc_day":{"noorahemad.khalifa@solarsquare.in":{"md":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,1,0,0,0,0],[0,0,0,1,0,0],[0,0,0,0,0,0]],"ord":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,1,0],[0,0,0,0,0,0],[0,0,0,1,0,0],[0,0,0,0,0,0]],"hoto":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]},"rajkumar.sai@solarsquare.in":{"md":[[0,0,0,0,0,0],[1,0,0,0,1,0],[0,1,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],"ord":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],"hoto":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]},"ziyaul.shaikh@solarsquare.in":{"md":[[0,0,0,0,0,0],[1,1,0,0,0,1],[0,0,0,0,1,0],[1,0,0,0,0,1],[0,0,0,0,0,0],[0,0,0,0,0,0]],"ord":[[0,0,0,0,0,0],[1,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]],"hoto":[[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0],[0,0,0,0,0,0]]}},"sc_bubble":{"rajkumar.sai@solarsquare.in":[[0,1,2,0,0],[0,2,1,0,0]],"ziyaul.shaikh@solarsquare.in":[[0,3,2,0,0],[0,1,3,1,0],[0,2,1,0,0]],"noorahemad.khalifa@solarsquare.in":[[0,3,1,0,0],[1,4,1,1,0]]},"sc_hoto_dist":{"sanket.deshmukh@solarsquare.in":{"m":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"l":[0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"t":173,"tb":1,"dg":"SC","st":"Active"},"noorahemad.khalifa@solarsquare.in":{"m":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"l":[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"t":173,"tb":1,"dg":"SC","st":"Active"},"avishkar.sargule@solarsquare.in":{"m":[0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"l":[0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],"t":174,"tb":1,"dg":"SC","st":"Active"}},"hoto_win":{"mFrom":"2026-08-01","mTo":"2026-08-06","lFrom":"2026-07-01","lTo":"2026-07-06","lMonth":"Jul"}};
+  const N = T.mtd.bql.length;
+  const LABELS = Array.from({length: N}, (_, i) => 'Aug ' + (i + 1));
+  const STAGES = [
+    {id: 'bqlms',   title: 'BQL → MS conversion',    num: 'ms',   den: 'bql', useKw: false},
+    {id: 'msmd',    title: 'MS → MD conversion',     num: 'md',   den: 'ms',  useKw: false},
+    {id: 'mdord',   title: 'MD → Order conversion',  num: 'ord',  den: 'md',  useKw: true},
+    {id: 'ordhoto', title: 'Order → HOTO conversion',num: 'hoto', den: 'ord', useKw: true},
+  ];
+  let convMode = 'daily';   // 'daily' | 'cum' — cumulative = cum(num)/cum(den) through that day
+  const chSel = document.getElementById('ct2a-ch');
+  const lsSel = document.getElementById('ct2a-ls');
+  const kwSel = document.getElementById('ct2a-kw');
+  const FT_CH = ['Digital','Referral','SolarPro','BTL','Others'];
+  const FT_LS = ['0-2','2-5','5-7','7-9','9-10'];
+  const FT_KW = ['≤3.24 kW','3.24–5.4 kW','>5.4 kW','Unknown'];
+  function fIdx(sel, dims) { return sel.value === '__ALL__' ? -1 : dims.indexOf(sel.value); }
+  function lsBoxesOf(wrap) { return Array.from(wrap.querySelectorAll('input[type=checkbox]')); }
+  function lsSetFrom(wrap) {
+    const boxes = lsBoxesOf(wrap);
+    const all = boxes.find(b => b.value === '__ALL__');
+    if (all && all.checked) return null;                 // null = all buckets (incl. unknown)
+    const s = new Set();
+    boxes.forEach(b => { if (b.value !== '__ALL__' && b.checked) { const i = FT_LS.indexOf(b.value); if (i >= 0) s.add(i); } });
+    return s.size ? s : null;
+  }
+  function lsSelected() { return lsSetFrom(lsSel); }
+  function wireLsGroup(wrap, cb) {
+    const boxes = lsBoxesOf(wrap), all = boxes.find(b => b.value === '__ALL__');
+    boxes.forEach(b => b.addEventListener('change', () => {
+      if (b.value === '__ALL__') { if (b.checked) boxes.forEach(x => { if (x.value !== '__ALL__') x.checked = false; }); }
+      else if (b.checked) { all.checked = false; }
+      if (!boxes.some(x => x.checked)) all.checked = true;   // never allow empty
+      cb();
+    }));
+  }
+  function allBase() { return chSel.value === '__ALL__' && lsSelected() === null && kwSel.value === '__ALL__'; }
+  function sliceDaily(stage, per, useKw) {
+    const chI = fIdx(chSel, FT_CH), lsSet = lsSelected(), kwI = fIdx(kwSel, FT_KW);
+    const out = new Array(N).fill(0);
+    for (const [d, ci, li, ki, n] of T.slice[stage][per]) {
+      if (chI !== -1 && ci !== chI) continue;
+      if (lsSet !== null && !lsSet.has(li)) continue;
+      if (useKw && kwI !== -1 && ki !== kwI) continue;
+      if (d >= 1 && d <= N) out[d-1] += n;
+    }
+    return out;
+  }
+  function ratio(numArr, denArr) {
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = numArr[i], d = denArr[i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  function conv(src, numK, denK) {   // target only
+    let cn = 0, cd = 0;
+    return Array.from({length: N}, (_, i) => {
+      const n = src[numK][i], d = src[denK][i];
+      if (convMode === 'cum') {
+        cn += n; cd += d;
+        return cd > 0 ? +(cn / cd * 100).toFixed(2) : null;
+      }
+      return d > 0 ? +(n / d * 100).toFixed(2) : null;
+    });
+  }
+  const convCharts = {};
+  function buildConvCharts() { STAGES.forEach(st => {
+    const el = document.getElementById('ct2a-' + st.id);
+    if (!el) return;
+    if (convCharts[st.id]) convCharts[st.id].destroy();
+    const RAWS = [
+      ratio(sliceDaily(st.num, 'm', st.useKw), sliceDaily(st.den, 'm', st.useKw)),
+      ratio(sliceDaily(st.num, 'l', st.useKw), sliceDaily(st.den, 'l', st.useKw)),
+      allBase() ? conv(T.tgt, st.num, st.den) : Array.from({length: N}, () => null),
+    ];
+    const clamp = a => a.map(v => v === null ? null : Math.min(v, 100));
+    const capped = (raw, i) => raw[i] !== null && raw[i] > 100;
+    const pr = (raw, base) => ctx => capped(raw, ctx.dataIndex) ? 5 : base;
+    const ps = raw => ctx => capped(raw, ctx.dataIndex) ? 'triangle' : 'circle';
+    convCharts[st.id] = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: clamp(RAWS[0]), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: pr(RAWS[0], 2), pointStyle: ps(RAWS[0]), pointBackgroundColor: '#1d4ed8', tension: 0.25, spanGaps: true},
+        {label: 'LMTD',   data: clamp(RAWS[1]), borderColor: '#93c5fd', borderWidth: 2, pointRadius: pr(RAWS[1], 2), pointStyle: ps(RAWS[1]), pointBackgroundColor: '#93c5fd', tension: 0.25, spanGaps: true},
+        {label: 'Target', data: clamp(RAWS[2]), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: pr(RAWS[2], 0), pointStyle: ps(RAWS[2]), pointBackgroundColor: '#f59e0b', tension: 0.1, spanGaps: true},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: st.title + (convMode === 'cum' ? ' · cumulative' : ' · daily'), align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => {
+            const rv = RAWS[ctx.datasetIndex][ctx.dataIndex];
+            const jn = ctx.dataset.label === 'LMTD' ? ' (Jul ' + (ctx.dataIndex + 1) + ')' : '';
+            if (rv === null) return ctx.dataset.label + jn + ': –';
+            return ctx.dataset.label + jn + ': ' + rv.toFixed(1) + '%' + (rv > 100 ? ' ▲ above 100% — axis capped' : '');
+          }}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {min: 0, max: 100, grid: {color: '#eee'}, ticks: {stepSize: 20, font: {size: 9}, callback: v => v + '%'}}}}
+    });
+  }); }
+  buildConvCharts();
+  // ---- SC-level insights + bubble (dynamic: respond to day window AND lead-score filter) ----
+  // SCD[email][metric] is a 6×N matrix [bucket][day]. We collapse it to a per-day array using
+  // the same lead-score selection as the charts (null = all buckets incl. unknown).
+  const SCD = T.sc_day || {};
+  const scEmails = Object.keys(SCD);
+  function scShort(e) { return e.split('@')[0]; }
+  function ppf(v) { return (v >= 0 ? '+' : '') + v.toFixed(1) + 'pp'; }
+  // Collapse an SC's metric matrix to a per-day array under the current lead-score filter.
+  function scArr(email, metric) {
+    const mat = SCD[email][metric];          // [6][N]
+    const lsSet = lsSelected();              // Set of bucket idx, or null = all
+    const out = new Array(N).fill(0);
+    for (let b = 0; b < mat.length; b++) {
+      if (lsSet !== null && !lsSet.has(b)) continue;   // unknown (b=5) only counts under "all"
+      for (let i = 0; i < N; i++) out[i] += mat[b][i];
+    }
+    return out;
+  }
+  function scSum(email, metric, i0, i1) {
+    const a = scArr(email, metric); let s = 0;
+    for (let i = i0; i <= i1; i++) s += a[i];
+    return s;
+  }
+  function scDecompose(numKey, denKey, i0, i1, minDen) {
+    const guard = minDen || 3;
+    let numT = 0, denT = 0;
+    const per = [];
+    scEmails.forEach(e => {
+      const n = scSum(e, numKey, i0, i1), d = scSum(e, denKey, i0, i1);
+      numT += n; denT += d;
+      if (d >= guard) per.push({e, n, d});   // volume guard: single-day windows use a lower floor
+    });
+    if (denT === 0) return null;
+    const blend = numT / denT * 100;
+    per.forEach(p => { p.contrib = (p.d / denT) * (p.n / p.d * 100 - blend); });
+    per.sort((a, b) => a.contrib - b.contrib);
+    return {
+      blend,
+      down: per.filter(p => p.contrib < -0.02).slice(0, 5),
+      up:   per.filter(p => p.contrib > 0.02).slice(-3).reverse(),
+    };
+  }
+  function scInsightBlock(title, numKey, denKey) {
+    const LAST = N - 1, i5 = Math.max(0, LAST - 4);
+    const d1 = scDecompose(numKey, denKey, LAST, LAST, 1);   // same day: guard ≥1 (few MDs land in a day)
+    const d5 = scDecompose(numKey, denKey, i5, LAST, 3);     // 5-day window: guard ≥3
+    const fmtList = arr => arr && arr.length ? arr.map(p => `<b style="color:${p.contrib < 0 ? 'var(--red)' : 'var(--green)'};">${scShort(p.e)} ${ppf(p.contrib)}</b>`).join(', ') : 'none material';
+    let rows = '';
+    if (d1) rows += `<div style="margin-bottom:4px;"><b>Same day (Aug ${N})</b> · city ${d1.blend.toFixed(1)}%<br>pulling down: ${fmtList(d1.down)}<br>pulling up: ${fmtList(d1.up)}</div>`;
+    else rows += `<div style="color:var(--muted); margin-bottom:4px;">Same day · no SC volume in this filter.</div>`;
+    if (d5) rows += `<div><b>Last 5 days</b> · city ${d5.blend.toFixed(1)}%<br>pulling down: ${fmtList(d5.down)}<br>pulling up: ${fmtList(d5.up)}</div>`;
+    else rows += `<div style="color:var(--muted);">Last 5 days · no SC volume in this filter.</div>`;
+    return `<div style="border:1px solid var(--line); border-radius:6px; padding:11px 13px; font-size:10.5px; line-height:1.55; background:#fafafa;">
+      <div style="font-weight:700; font-size:11.5px; margin-bottom:6px; color:var(--ink);">${title} — SC contributions</div>
+      ${rows}
+    </div>`;
+  }
+  function renderScInsights() {
+    const host = document.getElementById('ct2a-sc-insights');
+    if (!host) return;
+    host.innerHTML = scInsightBlock('MD \u2192 Order', 'ord', 'md') + scInsightBlock('Order \u2192 HOTO', 'hoto', 'ord');
+  }
+
+  // ---- SC bubble chart: X=orders, Y=MD→Order conv%, size=MDs (own channel + lead-score filters) ----
+  const ctbCh = document.getElementById('ctb-ch');
+  const ctbLs = document.getElementById('ctb-ls');
+  let scBubbleChart = null;
+  function buildScBubble() {
+    const el = document.getElementById('ct2a-sc-bubble');
+    if (!el || typeof Chart === 'undefined') return;
+    // Per-SC MTD totals under this chart's own channel + lead-score filters.
+    const SB = T.sc_bubble || {};
+    const chI = ctbCh.value === '__ALL__' ? -1 : FT_CH.indexOf(ctbCh.value);
+    const lsSet = lsSetFrom(ctbLs);
+    const raw = Object.keys(SB).map(e => {
+      let md = 0, ord = 0, hoto = 0;
+      for (const rec of SB[e]) {                 // rec = [chIdx, lsBucket, md, ord, hoto]
+        if (chI !== -1 && rec[0] !== chI) continue;
+        if (lsSet !== null && !lsSet.has(rec[1])) continue;
+        md += rec[2]; ord += rec[3]; hoto += rec[4];
+      }
+      return {email: e, md, ord, hoto, pending: Math.max(0, ord - hoto), conv: md > 0 ? ord / md * 100 : 0};
+    }).filter(r => r.md > 0);
+    if (!raw.length) { if (scBubbleChart) { scBubbleChart.destroy(); scBubbleChart = null; } return; }
+    // One bubble per SC. Size strictly proportional to that SC's own MD count (area ∝ MD via sqrt).
+    // A tiny deterministic jitter separates SCs sharing identical (orders, conv) so none hide.
+    const maxMd = Math.max(...raw.map(r => r.md));
+    const rOf = md => 5 + Math.sqrt(md / maxMd) * 22;
+    const cell = {};
+    raw.forEach(r => { const k = r.ord + '|' + r.conv.toFixed(1); (cell[k] = cell[k] || []).push(r); });
+    const pts = [];
+    Object.values(cell).forEach(members => {
+      members.sort((a, b) => b.md - a.md);
+      members.forEach((r, idx) => {
+        const ang = idx * 2.399963;   // golden-angle spread
+        const rad = idx === 0 ? 0 : 0.12 * Math.sqrt(idx);
+        pts.push({x: r.ord + Math.cos(ang) * rad, y: +(r.conv + Math.sin(ang) * rad * 1.4).toFixed(2),
+                  r: rOf(r.md), _d: r});
+      });
+    });
+    const colOf = c => c < 15 ? 'rgba(220,38,38,0.5)' : (c <= 30 ? 'rgba(245,158,11,0.5)' : 'rgba(22,163,74,0.5)');
+    const borderOf = c => c < 15 ? '#dc2626' : (c <= 30 ? '#f59e0b' : '#16a34a');
+    // X-axis max adapts to this city's busiest SC: round max orders up to the next multiple
+    // of 5 with a little headroom, so bubbles fill the plot without clipping the biggest SC.
+    const maxOrd = Math.max(...raw.map(r => r.ord), 0);
+    const xMax = Math.max(5, Math.ceil((maxOrd + 1) / 5) * 5);
+    if (scBubbleChart) scBubbleChart.destroy();
+    scBubbleChart = new Chart(el.getContext('2d'), {
+      type: 'bubble',
+      data: {datasets: [{
+        data: pts,
+        backgroundColor: pts.map(p => colOf(p._d.conv)),
+        borderColor: pts.map(p => borderOf(p._d.conv)),
+        borderWidth: 1.2, hoverBorderWidth: 2,
+      }]},
+      options: {responsive: true, maintainAspectRatio: false,
+        interaction: {mode: 'nearest', intersect: true},
+        plugins: {
+          legend: {display: false}, title: {display: false},
+          tooltip: {enabled: true, displayColors: false, callbacks: {
+            title: () => '',
+            label: ctx => {
+              const d = ctx.raw._d;
+              return d.email + '  |  MD ' + d.md + '  |  Orders ' + d.ord + '  |  Conv ' + d.conv.toFixed(1) + '%  |  Pending ' + d.pending;
+            }
+          }}
+        },
+        scales: {
+          x: {title: {display: true, text: 'Orders (MTD)', font: {size: 10}}, min: 0, max: xMax, grid: {color: '#eee'}, ticks: {font: {size: 9}, stepSize: 5}},
+          y: {title: {display: true, text: 'MD \u2192 Order conversion %', font: {size: 10}}, beginAtZero: true, grace: '10%', grid: {color: '#eee'}, ticks: {font: {size: 9}, callback: v => v + '%'}}
+        }}
+    });
+  }
+  // ---- SC bubble chart 2: X=HOTOs, Y=Order→HOTO conv%, size=orders (shares bubble filters) ----
+  let scBubbleChart2 = null;
+  function buildScBubble2() {
+    const el = document.getElementById('ct2a-sc-bubble2');
+    if (!el || typeof Chart === 'undefined') return;
+    const SB = T.sc_bubble || {};
+    const chI = ctbCh.value === '__ALL__' ? -1 : FT_CH.indexOf(ctbCh.value);
+    const lsSet = lsSetFrom(ctbLs);
+    const raw = Object.keys(SB).map(e => {
+      let ord = 0, hoto = 0;
+      for (const rec of SB[e]) {                 // rec = [chIdx, lsBucket, md, ord, hoto]
+        if (chI !== -1 && rec[0] !== chI) continue;
+        if (lsSet !== null && !lsSet.has(rec[1])) continue;
+        ord += rec[3]; hoto += rec[4];
+      }
+      return {email: e, ord, hoto, pending: Math.max(0, ord - hoto), conv: ord > 0 ? hoto / ord * 100 : 0};
+    }).filter(r => r.ord > 0);                    // Order → HOTO: denominator is orders
+    if (!raw.length) { if (scBubbleChart2) { scBubbleChart2.destroy(); scBubbleChart2 = null; } return; }
+    const maxOrd = Math.max(...raw.map(r => r.ord));
+    const rOf = ord => 5 + Math.sqrt(ord / maxOrd) * 22;   // bubble size ∝ orders
+    const cell = {};
+    raw.forEach(r => { const k = r.hoto + '|' + r.conv.toFixed(1); (cell[k] = cell[k] || []).push(r); });
+    const pts = [];
+    Object.values(cell).forEach(members => {
+      members.sort((a, b) => b.ord - a.ord);
+      members.forEach((r, idx) => {
+        const ang = idx * 2.399963;
+        const rad = idx === 0 ? 0 : 0.12 * Math.sqrt(idx);
+        pts.push({x: r.hoto + Math.cos(ang) * rad, y: +(r.conv + Math.sin(ang) * rad * 1.4).toFixed(2),
+                  r: rOf(r.ord), _d: r});
+      });
+    });
+    // Order→HOTO runs high; band vs typical HOTO conversion: red <70, amber 70–90, green >90
+    const colOf = c => c < 70 ? 'rgba(220,38,38,0.5)' : (c <= 90 ? 'rgba(245,158,11,0.5)' : 'rgba(22,163,74,0.5)');
+    const borderOf = c => c < 70 ? '#dc2626' : (c <= 90 ? '#f59e0b' : '#16a34a');
+    const maxHoto = Math.max(...raw.map(r => r.hoto), 0);
+    const xMax = Math.max(5, Math.ceil((maxHoto + 1) / 5) * 5);
+    if (scBubbleChart2) scBubbleChart2.destroy();
+    scBubbleChart2 = new Chart(el.getContext('2d'), {
+      type: 'bubble',
+      data: {datasets: [{
+        data: pts,
+        backgroundColor: pts.map(p => colOf(p._d.conv)),
+        borderColor: pts.map(p => borderOf(p._d.conv)),
+        borderWidth: 1.2, hoverBorderWidth: 2,
+      }]},
+      options: {responsive: true, maintainAspectRatio: false,
+        interaction: {mode: 'nearest', intersect: true},
+        plugins: {
+          legend: {display: false}, title: {display: false},
+          tooltip: {enabled: true, displayColors: false, callbacks: {
+            title: () => '',
+            label: ctx => {
+              const d = ctx.raw._d;
+              return d.email + '  |  Orders ' + d.ord + '  |  HOTO ' + d.hoto + '  |  Conv ' + d.conv.toFixed(1) + '%  |  Pending ' + d.pending;
+            }
+          }}
+        },
+        scales: {
+          x: {title: {display: true, text: 'HOTOs (MTD)', font: {size: 10}}, min: 0, max: xMax, grid: {color: '#eee'}, ticks: {font: {size: 9}, stepSize: 5}},
+          y: {title: {display: true, text: 'Order \u2192 HOTO conversion %', font: {size: 10}}, beginAtZero: true, grace: '10%', grid: {color: '#eee'}, ticks: {font: {size: 9}, callback: v => v + '%'}}
+        }}
+    });
+  }
+  function buildBubbles() { buildScBubble(); buildScBubble2(); }
+  function refreshScViews() { renderScInsights(); buildBubbles(); }
+  ctbCh.addEventListener('change', buildBubbles);
+  wireLsGroup(ctbLs, buildBubbles);
+  refreshScViews();
+  const cvD = document.getElementById('ct2a-conv-daily'), cvC = document.getElementById('ct2a-conv-cum');
+  function setConvBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  cvD.addEventListener('click', () => { convMode = 'daily'; setConvBtn(cvD, cvC); buildConvCharts(); });
+  cvC.addEventListener('click', () => { convMode = 'cum';   setConvBtn(cvC, cvD); buildConvCharts(); });
+  const onSharedFilter = () => { buildConvCharts(); buildTrend(); renderScInsights(); };
+  chSel.addEventListener('change', onSharedFilter);
+  kwSel.addEventListener('change', onSharedFilter);
+  wireLsGroup(lsSel, onSharedFilter);
+  // Trend (MD / Order / HOTO) · daily or cumulative
+  let ordChart = null, mode = 'daily', trendMetric = 'ord';
+  const TREND_META = {
+    md:  {daily: 'MDs per day · FS',    cum: 'Cumulative MDs · FS',    axis: 'MDs'},
+    ord: {daily: 'Orders per day · FS', cum: 'Cumulative orders · FS', axis: 'Orders'},
+    hoto:{daily: 'HOTOs per day · FS',  cum: 'Cumulative HOTOs · FS',  axis: 'HOTOs'},
+  };
+  function trendSlice(per) {
+    const arr = sliceDaily(trendMetric, per, false);
+    if (mode === 'daily') return arr;
+    let c = 0; return arr.map(v => (c += v));
+  }
+  function trendTgt() {
+    const arr = (T.tgt[trendMetric] || []).slice(0, N);
+    if (mode === 'daily') return arr.map(v => Math.round(v * 10) / 10);
+    let c = 0; return arr.map(v => Math.round((c += v) * 10) / 10);
+  }
+  function buildTrend() {
+    const el = document.getElementById('ct2a-order');
+    if (!el) return;
+    if (ordChart) ordChart.destroy();
+    const meta = TREND_META[trendMetric];
+    ordChart = new Chart(el.getContext('2d'), {
+      type: 'line',
+      data: {labels: LABELS, datasets: [
+        {label: 'MTD',    data: trendSlice('m'), borderColor: '#1d4ed8', backgroundColor: 'rgba(29,78,216,0.06)', borderWidth: 2, pointRadius: 2, tension: 0.25, fill: mode === 'cum'},
+        {label: 'LMTD',   data: trendSlice('l'), borderColor: '#93c5fd', borderWidth: 2, pointRadius: 2, tension: 0.25},
+        {label: 'Target', data: allBase() ? trendTgt() : Array.from({length: N}, () => null), borderColor: '#f59e0b', borderDash: [6,4], borderWidth: 2, pointRadius: 0, tension: 0.1},
+      ]},
+      options: {responsive: true, maintainAspectRatio: false, interaction: {mode: 'index', intersect: false},
+        plugins: {
+          legend: {position: 'top', align: 'end', labels: {font: {size: 9}, boxWidth: 9}},
+          title: {display: true, text: mode === 'daily' ? meta.daily : meta.cum, align: 'start', font: {size: 11, weight: '700'}},
+          tooltip: {callbacks: {label: ctx => ctx.dataset.label + (ctx.dataset.label === 'LMTD' ? ' (Jul ' + (ctx.dataIndex + 1) + ')' : '') + ': ' + ctx.parsed.y}}
+        },
+        scales: {x: {grid: {display: false}, ticks: {font: {size: 8}, maxTicksLimit: 16}},
+                 y: {beginAtZero: true, grid: {color: '#eee'}, ticks: {font: {size: 9}}, title: {display: true, text: meta.axis, font: {size: 9}}}}}
+    });
+  }
+  const bD = document.getElementById('ct2a-ord-daily'), bC = document.getElementById('ct2a-ord-cum');
+  function setBtn(on, off) {
+    on.style.background = 'var(--blue)'; on.style.color = '#fff'; on.style.borderColor = 'var(--blue)';
+    off.style.background = '#fff'; off.style.color = 'var(--ink-2)'; off.style.borderColor = 'var(--line)';
+  }
+  bD.addEventListener('click', () => { mode = 'daily'; setBtn(bD, bC); buildTrend(); });
+  bC.addEventListener('click', () => { mode = 'cum';   setBtn(bC, bD); buildTrend(); });
+  // Metric chips (MD / Order / HOTO)
+  const tMd = document.getElementById('ct2a-trend-md'), tOrd = document.getElementById('ct2a-trend-ord'), tHoto = document.getElementById('ct2a-trend-hoto');
+  const tChips = {md: tMd, ord: tOrd, hoto: tHoto};
+  function setChip(active) {
+    Object.entries(tChips).forEach(([k, btn]) => {
+      const on = k === active;
+      btn.style.background = on ? 'var(--blue)' : '#fff';
+      btn.style.color = on ? '#fff' : 'var(--ink-2)';
+      btn.style.borderColor = on ? 'var(--blue)' : 'var(--line)';
+    });
+  }
+  Object.entries(tChips).forEach(([k, btn]) => btn.addEventListener('click', () => { trendMetric = k; setChip(k); buildTrend(); }));
+  buildTrend();
+
+  // ================= SC HOTO-count distribution · MTD vs LMTD =================
+  (function initHotoDist(){
+    const HD = T.sc_hoto_dist || {}, WIN = T.hoto_win || {};
+    const fromEl = document.getElementById('hd-from'), toEl = document.getElementById('hd-to');
+    const tbody = document.querySelector('#hd-table tbody');
+    const scBody = document.querySelector('#hd-sc-table tbody');
+    const toggle = document.getElementById('hd-toggle'), detail = document.getElementById('hd-detail');
+    if (!fromEl || !tbody) return;
+    const BL = ['0–4','4–8','8–12','12–16','16–20','20+'];
+    const TL = ['<60d','60–180d','180–360d','>360d','No tenure'];
+    const tenWrap = document.getElementById('hd-ten');
+    const tenBoxes = tenWrap ? Array.from(tenWrap.querySelectorAll('input[type=checkbox]')) : [];
+    const tenAll = tenBoxes.find(b => b.value === '__ALL__');
+    function tenSet(){
+      if (!tenAll || tenAll.checked) return null;              // null = all tenures
+      const s = new Set();
+      tenBoxes.forEach(b => { if (b.value !== '__ALL__' && b.checked) s.add(+b.value); });
+      return s.size ? s : null;
+    }
+    const bucketOf = c => c<=4?0 : c<=8?1 : c<=12?2 : c<=16?3 : c<=20?4 : 5;
+    const dayOf = iso => parseInt(iso.split('-')[2], 10);
+    const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const shortD = iso => { const p = iso.split('-'); return MON[+p[1]-1] + ' ' + (+p[2]); };
+    const lmIso = iso => (WIN.lFrom || iso).slice(0,8) + iso.slice(8);   // same day, prev month
+    let open = false, chM = null, chL = null;
+
+    function counts(period, d1, d2){
+      // total HOTOs per SC across the selected day-of-month range, tenure-filtered
+      const ts = tenSet();
+      const out = {};
+      Object.keys(HD).forEach(e => {
+        if (ts && !ts.has(HD[e].tb)) return;
+        const arr = HD[e][period]; let n = 0;
+        for (let d = d1; d <= d2; d++) n += (arr[d-1] || 0);
+        if (n > 0) out[e] = n;
+      });
+      return out;
+    }
+    function gridOf(cnt){
+      const g = [0,0,0,0,0,0,0];
+      Object.values(cnt).forEach(n => { g[bucketOf(n)]++; g[6]++; });
+      return g;
+    }
+    function meanStd(vals){
+      const n = vals.length; if (!n) return [0,0,0];
+      const m = vals.reduce((a,b)=>a+b,0)/n;
+      let v = 0; for (const x of vals) v += (x-m)*(x-m);
+      return [m, n>1 ? Math.sqrt(v/(n-1)) : 0, n];
+    }
+    function statsPlugin(m, sd, n){
+      return {id:'hdst'+Math.random().toString(36).slice(2), afterDatasetsDraw(c){
+        const x=c.scales.x, ya=c.chartArea, ctx=c.ctx; ctx.save();
+        const pxm=x.getPixelForValue(m);
+        ctx.strokeStyle='#B97400'; ctx.setLineDash([5,4]); ctx.lineWidth=1.4;
+        ctx.beginPath(); ctx.moveTo(pxm,ya.top); ctx.lineTo(pxm,ya.bottom); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle='#B97400'; ctx.font='700 10px system-ui,sans-serif'; ctx.textAlign='center';
+        ctx.fillText('mean '+m.toFixed(1), pxm, ya.bottom-5);
+        if (sd>0) [[m-sd,'−1σ'],[m+sd,'+1σ']].forEach(([v,lab])=>{
+          if (v>=x.min && v<=x.max){ const px=x.getPixelForValue(v);
+            ctx.strokeStyle='rgba(122,116,110,0.5)'; ctx.setLineDash([3,3]); ctx.lineWidth=1;
+            ctx.beginPath(); ctx.moveTo(px,ya.top+16); ctx.lineTo(px,ya.bottom); ctx.stroke(); ctx.setLineDash([]);
+            ctx.fillStyle='#7A746E'; ctx.font='9px system-ui,sans-serif'; ctx.textAlign='center';
+            ctx.fillText(lab, px, ya.top+26); }});
+        ctx.fillStyle='#14110F'; ctx.font='700 10px system-ui,sans-serif'; ctx.textAlign='right';
+        ctx.fillText('μ '+m.toFixed(2)+'   σ '+sd.toFixed(2)+'   n '+n, ya.right-2, ya.top+11);
+        ctx.restore();
+      }};
+    }
+    function drawDist(canvasId, cnt, label, colour, prev){
+      const el = document.getElementById(canvasId);
+      if (!el || typeof Chart === 'undefined') return null;
+      const vals = Object.values(cnt);
+      if (prev) { try { prev.destroy(); } catch(e){} }
+      if (!vals.length) return null;
+      const [m, sd, n] = meanStd(vals);
+      const xmax = Math.max.apply(null, vals.concat([1]));
+      const binW = Math.max(1, Math.ceil(xmax/8)), nb = Math.floor(xmax/binW)+1;
+      const freq = new Array(nb).fill(0);
+      vals.forEach(c => { freq[Math.min(nb-1, Math.floor(c/binW))]++; });
+      const hist = freq.map((f,i)=>({x:i*binW+binW/2, y:f}));
+      const xhi = Math.max(xmax+binW, m+3*sd, binW);
+      const pts = []; const step = Math.max(0.1, xhi/120);
+      for (let x=0; x<=xhi+1e-9; x+=step){
+        const y = sd>0 ? Math.exp(-((x-m)*(x-m))/(2*sd*sd))/(sd*Math.sqrt(2*Math.PI))*n*binW : 0;
+        pts.push({x:+x.toFixed(3), y});
+      }
+      return new Chart(el.getContext('2d'), {
+        data:{datasets:[
+          {type:'bar', data:hist, backgroundColor:colour.fill, borderColor:colour.line, borderWidth:1, barThickness:Math.max(6,Math.min(40,Math.round(300/(nb+1)))), order:2},
+          {type:'line', data:pts, borderColor:colour.line, borderWidth:2, pointRadius:0, tension:0.35, order:1}
+        ]},
+        options:{responsive:true, maintainAspectRatio:false, parsing:false,
+          plugins:{legend:{display:false}, title:{display:true, text:label, align:'start', font:{size:11, weight:'700'}},
+            tooltip:{callbacks:{label:c=>c.dataset.type==='bar'?`${c.parsed.y} SC`:`fit: ${c.parsed.y.toFixed(2)}`}}},
+          scales:{x:{type:'linear', min:0, max:xhi, title:{display:true,text:'HOTOs per SC',font:{size:9}}, grid:{display:false}, ticks:{font:{size:8}, stepSize:binW}},
+                  y:{beginAtZero:true, title:{display:true,text:'SCs',font:{size:9}}, grid:{color:'#eee'}, ticks:{font:{size:8}, precision:0}}}},
+        plugins:[statsPlugin(m, sd, n)]
+      });
+    }
+
+    function render(){
+      const d1 = dayOf(fromEl.value), d2 = dayOf(toEl.value);
+      const cm = counts('m', d1, d2), cl = counts('l', d1, d2);
+      const gm = gridOf(cm), gl = gridOf(cl);
+      const shareOf = (g,b) => g[6] > 0 ? 100*g[b]/g[6] : 0;
+
+      const row = (lbl, sub, g, cmp, cls) => {
+        let tds = '';
+        for (let b=0; b<6; b++){
+          const sh = shareOf(g,b);
+          let col = 'color:var(--muted);', mark = '';
+          if (cmp){                                  // MTD row: colour vs LMTD share
+            const d = sh - shareOf(cmp, b);
+            if (Math.abs(d) < 0.05)      { col = 'color:#B97400;'; mark = ' ▬'; }
+            else if (d > 0)              { col = 'color:#1E8A4C;'; mark = ' ▲'; }
+            else                         { col = 'color:#B43A2A;'; mark = ' ▼'; }
+          }
+          tds += `<td><span class="n">${g[b]}</span><span class="shr" style="${col}">${sh.toFixed(1)}%${mark}</span></td>`;
+        }
+        return `<tr class="${cls}"><td class="left">${lbl}<span class="per">${sub}</span></td>${tds}`
+             + `<td class="tot"><span class="n">${g[6]}</span></td></tr>`;
+      };
+      const fmtWin = (a,b) => a === b ? a : a + ' – ' + b;
+      const mLbl = fmtWin(shortD(fromEl.value), shortD(toEl.value));
+      const lLbl = fmtWin(shortD(lmIso(fromEl.value)), shortD(lmIso(toEl.value)));
+      tbody.innerHTML = row('MTD', mLbl, gm, gl, '')
+                      + row('LMTD', lLbl, gl, null, 'hd-lmtd');
+
+      if (open){
+        chM = drawDist('hd-chart-m', cm, 'MTD · HOTOs per SC', {fill:'rgba(29,78,216,0.15)', line:'#1d4ed8'}, chM);
+        chL = drawDist('hd-chart-l', cl, 'LMTD · HOTOs per SC', {fill:'rgba(147,197,253,0.25)', line:'#7CA7E8'}, chL);
+        // SC-level table, grouped by MTD bucket (20+ first), delta coloured
+        const all = new Set(Object.keys(cm).concat(Object.keys(cl)));
+        const rows = Array.from(all).map(e => ({e, m: cm[e]||0, l: cl[e]||0}));
+        const byB = [[],[],[],[],[],[],[]];          // index 6 = MTD-zero SCs
+        rows.forEach(r => byB[r.m > 0 ? bucketOf(r.m) : 6].push(r));
+        const dCell = d => {
+          const col = d > 0 ? '#1E8A4C' : (d === 0 ? '#B97400' : '#B43A2A');
+          const arw = d > 0 ? ' ▲' : (d === 0 ? ' ▬' : ' ▼');
+          return `<td style="font-weight:700; color:${col};">${d > 0 ? '+' : ''}${d}${arw}</td>`;
+        };
+        const grp = (lbl, n) =>
+          `<tr class="grp"><td colspan="7">${lbl}<span class="cnt">${n} SC${n===1?'':'s'}</span></td></tr>`;
+        const stCell = e => {
+          const st = (HD[e] || {}).st;
+          if (!st) return `<td class="left" style="color:var(--muted);">–</td>`;
+          const s = st.toLowerCase();
+          const col = s === 'active' ? '#1E8A4C'
+                    : (s === 'resigned' ? '#B43A2A'
+                    : (s === 'newly hired' || s === 'in training' ? '#B97400' : 'var(--muted)'));
+          return `<td class="left" style="white-space:nowrap; font-weight:600; color:${col};">${st}</td>`;
+        };
+        const dgCell = e => {
+          const dg = (HD[e] || {}).dg;
+          return dg
+            ? `<td class="left" style="white-space:nowrap; font-weight:600; color:var(--ink-2);">${dg}</td>`
+            : `<td class="left" style="color:var(--muted);">–</td>`;
+        };
+        const tCell = e => {
+          const d = HD[e], t = d ? d.t : null, tb = d ? d.tb : 4;
+          const col = tb === 0 ? '#B43A2A' : (tb === 1 ? '#B97400' : (tb === 4 ? 'var(--muted)' : 'var(--ink-2)'));
+          const txt = (t === null || t === undefined) ? 'No tenure' : t + 'd <span style="color:var(--muted); font-weight:400;">· ' + TL[tb] + '</span>';
+          return `<td class="left" style="color:${col}; font-weight:600; white-space:nowrap;">${txt}</td>`;
+        };
+        let html = '';
+        for (let b=5; b>=0; b--){
+          const arr = byB[b]; if (!arr.length) continue;
+          arr.sort((x,y) => y.m - x.m || y.l - x.l);
+          html += grp(BL[b] + ' HOTOs', arr.length);
+          arr.forEach(r => {
+            html += `<tr><td class="left">${r.e}</td>${stCell(r.e)}${dgCell(r.e)}${tCell(r.e)}<td style="font-weight:700;">${r.m}</td>`
+                 +  `<td style="color:var(--ink-2);">${r.l}</td>${dCell(r.m - r.l)}</tr>`;
+          });
+        }
+        if (byB[6].length){                          // active last period only
+          byB[6].sort((x,y) => y.l - x.l);
+          html += grp('No HOTO this period', byB[6].length);
+          byB[6].forEach(r => {
+            html += `<tr class="zero"><td class="left">${r.e}</td>${stCell(r.e)}${dgCell(r.e)}${tCell(r.e)}<td style="font-weight:700; color:var(--muted);">0</td>`
+                 +  `<td style="color:var(--ink-2);">${r.l}</td>${dCell(r.m - r.l)}</tr>`;
+          });
+        }
+        scBody.innerHTML = html || '<tr><td colspan="7" class="left" style="color:var(--muted);">No SCs with HOTOs in this window.</td></tr>';
+      }
+    }
+    toggle.addEventListener('click', () => {
+      open = !open;
+      detail.style.display = open ? '' : 'none';
+      toggle.textContent = (open ? '▾' : '▸') + ' Detailed view';
+      toggle.style.background = open ? 'var(--blue)' : '#fff';
+      toggle.style.color = open ? '#fff' : 'var(--ink-2)';
+      toggle.style.borderColor = open ? 'var(--blue)' : 'var(--line)';
+      render();
+    });
+    fromEl.addEventListener('change', () => { if (dayOf(toEl.value) < dayOf(fromEl.value)) toEl.value = fromEl.value; render(); });
+    toEl.addEventListener('change',   () => { if (dayOf(toEl.value) < dayOf(fromEl.value)) fromEl.value = toEl.value; render(); });
+    tenBoxes.forEach(b => b.addEventListener('change', () => {
+      if (b.value === '__ALL__'){ if (b.checked) tenBoxes.forEach(x => { if (x.value !== '__ALL__') x.checked = false; }); }
+      else if (b.checked){ tenAll.checked = false; }
+      if (!tenBoxes.some(x => x.checked)) tenAll.checked = true;   // never allow empty
+      render();
+    }));
+    render();
+  })();
+})();
+</script>
+</body></html>
